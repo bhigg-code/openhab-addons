@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="jvcprojector"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
+	xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
+
+	<!--JVC-GENERIC-->
+	<thing-type id="jvc-projector-generic" listed="true">
+		<label>JVC Projector</label>
+		<description>JVC Projector</description>
+<channels>
+<channel id="Power" typeId="Channel-Power"/>
+<channel id="InputHDMI" typeId="Input-Selection"/>
+<channel id="LampHours" typeId="Lamp-Hours"/>
+<channel id="PictureMode" typeId="Picture-Mode"/>
+<channel id="Model" typeId="Model"/>
+<channel id="Firmware" typeId="Firmware"/>
+</channels>
+<config-description>
+			<parameter name="IPAddress" type="text" required="true">
+				<label>IPAddress of the unit</label>
+				<description>IPAddress of the projector</description>
+			</parameter>
+			<parameter name="Refresh" type="integer" required="true">
+			<label>Refresh Interval (Seconds)</label>
+			<description>Enter the Refresh Interval in Seconds to refresh channel states</description>
+			</parameter>
+		</config-description>
+	</thing-type>
+	<channel-type id="Channel-Power">
+		<item-type>Switch</item-type>
+		<label>Power</label>
+		<description>Power Switch for a JVC Class Projector to turn/off Power</description>		
+	</channel-type>	
+	<channel-type id="Input-Selection">
+	<item-type>String</item-type>
+	<label>InputHDMI</label>
+	<description>Input Selection for HDMI</description>
+	</channel-type>
+	<channel-type id="Picture-Mode">
+<item-type>String</item-type>
+<label>PictureMode</label>
+<description>Input for Picture</description>
+</channel-type>
+	<channel-type id="Lamp-Hours">
+<item-type>String</item-type>
+<label>LampHours</label>
+<description>Lists the Lamp Hours</description>
+</channel-type>
+<channel-type id="Model">
+<item-type>String</item-type>
+<label>Model</label>
+<description>Displays the Model of the Projector</description>
+</channel-type>
+<channel-type id="Firmware">
+<item-type>String</item-type>
+<label>Firmware</label>
+<description>Displays the Firmware of the Projector</description>
+</channel-type>
+</thing:thing-descriptions>
