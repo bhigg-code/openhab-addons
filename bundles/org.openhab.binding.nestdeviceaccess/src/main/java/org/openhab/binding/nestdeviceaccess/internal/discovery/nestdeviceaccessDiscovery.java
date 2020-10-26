@@ -127,7 +127,7 @@ public class nestdeviceaccessDiscovery extends AbstractDiscoveryService {
         try {
 
             nestUtility = new NestUtility(projectId, clientId, clientSecret, refreshToken, accessToken);
-            if ((authorizationToken != null) && (refreshToken == null)) {
+            if ((authorizationToken != "") && (refreshToken == "")) {
                 // initial authorization request. We need to get a refresh token and then
                 logger.debug("Initial Access Token being retrieved...");
                 String[] tokens = new String[2];
