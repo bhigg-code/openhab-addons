@@ -127,18 +127,17 @@ public class nestdeviceaccessDiscovery extends AbstractDiscoveryService {
         try {
 
             nestUtility = new NestUtility(projectId, clientId, clientSecret, refreshToken, accessToken);
-            if ((authorizationToken != "") && (refreshToken == "")) {
+            if ((!authorizationToken.equals("")) && (refreshToken.equals(""))) {
                 // initial authorization request. We need to get a refresh token and then
                 logger.debug("Initial Access Token being retrieved...");
                 String[] tokens = new String[2];
                 tokens = nestUtility.requestAccessToken(clientId, clientSecret, authorizationToken);
                 tokens[0] = accessToken;
                 tokens[1] = refreshToken;
+            } else {
+                // accessToken is typically stale.. Getting fresh on initialization
+                accessToken = nestUtility.refreshAccessToken(refreshToken, clientId, clientSecret);
             }
-
-            // accessToken is typically stale.. Getting fresh on initialization
-            // TODO: Check access token for refresh
-            accessToken = nestUtility.refreshAccessToken(refreshToken, clientId, clientSecret);
             String url = "https://smartdevicemanagement.googleapis.com/v1/enterprises/" + projectId + "/devices";
             // get devices for discovery
             String jsonContent = nestUtility.getDeviceInfo(accessToken, url);
