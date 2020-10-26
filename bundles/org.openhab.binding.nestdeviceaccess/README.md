@@ -44,7 +44,7 @@ projectId=<list projectId here>
 '#clientId is the Google clientId for your application
 clientId=<list clientId here>
 
-'#clientSecreat is the Google clientSecret used to fetch the initial and refresh accessTokens
+'#clientSecret is the Google clientSecret used to fetch the initial and refresh accessTokens
 clientSecret=<list clientSecret here>
 
 '#authorizationToken is used to authorize your devices with the project and provide the user with a unique refresh and first time access token.
@@ -93,6 +93,9 @@ The NestDeviceAccess Binding is built with a sandbox project in Google. This mea
 
 To configure the discovery service, you must place a nestdeviceaccess.cfg in the services dir <eg etc/openhab2/services/nestdeviceaccess.cfg>
 
+You only need either the authorizationToken or refreshToken. If you use the authorizationToken, the binding will fetch your refreshToken and add it to the openhab log file (Make sure you update the nestdeviceaccess.cfg file with your refreshToken.) Otherwise, go through the linked instructions below and get your refreshToken and update the nestdeviceaccess.cfg file. 
+
+It is pretty easy to see if the nest discovery works, if the parameters are in the nestdeviceaccess.cfg file, when you go to the inbox and try to add a NestDeviceAccess thing, it will start the discovery. Otherwise, it will ask for the parameters manually.
 
 Make sure you follow the instructions on [Google Nest Authorization instructions](https://developers.google.com/nest/device-access/authorize) in order to get your initial Authorization and Refresh token. You can store those in the nestdeviceaccess.cfg file for configuration of the discovery service.
 
