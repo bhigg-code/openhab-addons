@@ -39,8 +39,8 @@
 <channel id="thermostatCurrentMode" typeId="thermostatCurrentMode-channel" />
 <channel id="thermostatCurrentEcoMode" typeId="thermostatCurrentEcoMode-channel" />
 <channel id="thermostatTargetTemperature" typeId="thermostatTargetTemperature-channel" />
-<channel id="thermostatMinTemperature" typeId="thermostatMinTemperature-channel" />
-<channel id="thermostatMaxTemperature" typeId="thermostatMaxTemperature-channel" />
+<channel id="thermostatMinimumTemperature" typeId="thermostatMinimumTemperature-channel" />
+<channel id="thermostatMaximumTemperature" typeId="thermostatMaximumTemperature-channel" />
 <channel id="thermostatScaleSetting" typeId="thermostatScaleSetting-channel" />            
 </channels>
 <config-description>
@@ -80,12 +80,12 @@
 <label>Target Temperature Setting</label>
 <description>Lists the Target Temperature Setting from the thermostat</description>
 </channel-type>
-<channel-type id="thermostatMinTemperature-channel">
+<channel-type id="thermostatMinimumTemperature-channel">
 <item-type>Number:Dimensionless</item-type>
 <label>Minimum Temperature Setting</label>
 <description>Lists the Minimum Temperature Setting from the thermostat</description>
 </channel-type>
-<channel-type id="thermostatMaxTemperature-channel">
+<channel-type id="thermostatMaximumTemperature-channel">
 <item-type>Number:Dimensionless</item-type>
 <label>Maximum Temperature Setting</label>
 <description>Lists the Maximum Temperature Setting from the thermostat</description>

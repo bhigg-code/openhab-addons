@@ -14,8 +14,8 @@
   <name>openHAB Add-ons :: Bundles :: nestdeviceaccess Binding</name>
 
 <properties>
-	<bnd.importpackage>
-	com.sun.jndi.dns;resolution:=optional, io.grpc.internal;resolution:=optional, android.net.*;resolution:=optional, com.squareup.okhttp.*;resolution:=optional,io.grpc.util;resolution:=optional,com.barchart.udt;resolution:=optional,com.fasterxml.aalto.*;resolution:=optional,com.oracle.svm.core.annotate;resolution:=optional,gnu.io.*;resolution:=optional,io.grpc.override;resolution:=optional,io.perfmark.*;resolution:=optional,io.netty.*;resolution:=optional,lzma.sdk.*;resolution:=optional,net.jpountz.lz4;resolution:=optional,net.jpountz.xxhash;resolution:=optional,okio.*;resolution:=optional,org.bouncycastle.*;resolution:=optional,org.conscrypt.*;resolution:=optional,org.eclipse.jetty.*;resolution:=optional,org.jboss.marshalling;resolution:=optional,reactor.blockhound.*;resolution:=optional,sun.net.dns;resolution:=optional,sun.security.ssl;resolution:=optional,sun.security.x509;resolution:=optional
+	<bnd.importpackage>	
+	com.sun.jndi.dns;resolution:=optional, io.grpc.internal;resolution:=optional, android.net.*;resolution:=optional, com.squareup.okhttp.*;resolution:=optional,io.grpc.util;resolution:=optional,com.barchart.udt;resolution:=optional,com.fasterxml.aalto.*;resolution:=optional,com.oracle.svm.core.annotate;resolution:=optional,gnu.io.*;resolution:=optional,io.grpc.override;resolution:=optional,io.perfmark.*;resolution:=optional,lzma.sdk.*;resolution:=optional,net.jpountz.lz4;resolution:=optional,net.jpountz.xxhash;resolution:=optional,okio.*;resolution:=optional,org.bouncycastle.*;resolution:=optional,org.conscrypt.*;resolution:=optional,org.eclipse.jetty.*;resolution:=optional,org.jboss.marshalling;resolution:=optional,reactor.blockhound.*;resolution:=optional,sun.net.dns;resolution:=optional,sun.security.ssl;resolution:=optional,sun.security.x509;resolution:=optional, sun.security.util;resolution:=optional
 	</bnd.importpackage>
 </properties>
 
@@ -70,8 +70,109 @@
   	<groupId>com.google.http-client</groupId>
   	<artifactId>google-http-client-jackson2</artifactId>
   	<version>1.36.0</version>
-  </dependency>  
-    
+  </dependency>
+<!-- https://mvnrepository.com/artifact/com.google.cloud/google-cloud-pubsub -->
+<dependency>
+    <groupId>com.google.cloud</groupId>
+    <artifactId>google-cloud-pubsub</artifactId>
+    <version>1.108.6</version>
+</dependency>
+<!-- https://mvnrepository.com/artifact/com.google.api.grpc/proto-google-cloud-pubsub-v1 -->
+<dependency>
+    <groupId>com.google.api.grpc</groupId>
+    <artifactId>proto-google-cloud-pubsub-v1</artifactId>
+    <version>1.90.6</version>
+</dependency>
+<!-- https://mvnrepository.com/artifact/com.google.api.grpc/proto-google-common-protos -->
+<dependency>
+    <groupId>com.google.api.grpc</groupId>
+    <artifactId>proto-google-common-protos</artifactId>
+    <version>2.0.0</version>
+</dependency>
+<!-- https://mvnrepository.com/artifact/io.grpc/grpc-alts -->
+<dependency>
+    <groupId>io.grpc</groupId>
+    <artifactId>grpc-alts</artifactId>
+    <version>1.33.0</version>
+</dependency>
+<!-- https://mvnrepository.com/artifact/io.grpc/grpc-auth -->
+<dependency>
+    <groupId>io.grpc</groupId>
+    <artifactId>grpc-auth</artifactId>
+    <version>1.33.0</version>
+</dependency>
+<!-- https://mvnrepository.com/artifact/io.grpc/grpc-grpclb -->
+<dependency>
+    <groupId>io.grpc</groupId>
+    <artifactId>grpc-grpclb</artifactId>
+    <version>1.33.0</version>
+</dependency>
+<!-- https://mvnrepository.com/artifact/io.grpc/grpc-netty-shaded -->
+<dependency>
+    <groupId>io.grpc</groupId>
+    <artifactId>grpc-netty-shaded</artifactId>
+    <version>1.33.0</version>
+</dependency>
+<!-- https://mvnrepository.com/artifact/io.grpc/grpc-protobuf -->
+<dependency>
+    <groupId>io.grpc</groupId>
+    <artifactId>grpc-protobuf</artifactId>
+    <version>1.33.0</version>
+</dependency>
+<!-- https://mvnrepository.com/artifact/io.grpc/grpc-protobuf-lite -->
+<dependency>
+    <groupId>io.grpc</groupId>
+    <artifactId>grpc-protobuf-lite</artifactId>
+    <version>1.33.0</version>
+</dependency>
+<!-- https://mvnrepository.com/artifact/io.grpc/grpc-stub -->
+<dependency>
+    <groupId>io.grpc</groupId>
+    <artifactId>grpc-stub</artifactId>
+    <version>1.33.0</version>
+</dependency>
+<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
+<dependency>
+    <groupId>org.apache.commons</groupId>
+    <artifactId>commons-lang3</artifactId>
+    <version>3.11</version>
+</dependency>
+<!-- https://mvnrepository.com/artifact/com.google.api/api-common -->
+<dependency>
+    <groupId>com.google.api</groupId>
+    <artifactId>api-common</artifactId>
+    <version>1.10.1</version>
+</dependency>
+<!-- https://mvnrepository.com/artifact/com.google.api/gax -->
+<dependency>
+    <groupId>com.google.api</groupId>
+    <artifactId>gax</artifactId>
+    <version>1.60.0</version>
+</dependency>
+<!-- https://mvnrepository.com/artifact/com.google.api/gax-grpc -->
+<dependency>
+    <groupId>com.google.api</groupId>
+    <artifactId>gax-grpc</artifactId>
+    <version>1.60.0</version>    
+</dependency>
+<!-- https://mvnrepository.com/artifact/com.google.auth/google-auth-library-credentials -->
+<dependency>
+    <groupId>com.google.auth</groupId>
+    <artifactId>google-auth-library-credentials</artifactId>
+    <version>0.22.0</version>
+</dependency>
+<!-- https://mvnrepository.com/artifact/com.google.auth/google-auth-library-oauth2-http -->
+<dependency>
+    <groupId>com.google.auth</groupId>
+    <artifactId>google-auth-library-oauth2-http</artifactId>
+    <version>0.22.0</version>
+</dependency>
+<!-- https://mvnrepository.com/artifact/com.google.api.grpc/proto-google-iam-v1 -->
+<dependency>
+    <groupId>com.google.api.grpc</groupId>
+    <artifactId>proto-google-iam-v1</artifactId>
+    <version>1.0.2</version>
+</dependency>
   <dependency>
   	<groupId>com.google.code.gson</groupId>
   	<artifactId>gson</artifactId>
@@ -199,7 +300,18 @@
     <artifactId>commons-codec</artifactId>
     <version>1.15</version>
 </dependency>
-
+<!-- https://mvnrepository.com/artifact/org.threeten/threetenbp -->
+<dependency>
+    <groupId>org.threeten</groupId>
+    <artifactId>threetenbp</artifactId>
+    <version>1.5.0</version>
+</dependency>
+<!-- https://mvnrepository.com/artifact/io.netty/netty-tcnative -->
+<dependency>
+    <groupId>io.netty</groupId>
+    <artifactId>netty-tcnative</artifactId>
+    <version>2.0.34.Final</version>
+</dependency>
   </dependencies>  
 </project>
 

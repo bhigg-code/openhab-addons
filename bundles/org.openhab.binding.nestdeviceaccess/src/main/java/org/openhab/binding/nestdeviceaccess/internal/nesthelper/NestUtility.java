@@ -16,6 +16,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.eclipse.smarthome.core.thing.Thing;
 import org.slf4j.Logger;
@@ -33,7 +35,12 @@ import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.cloud.pubsub.v1.AckReplyConsumer;
+import com.google.cloud.pubsub.v1.MessageReceiver;
+import com.google.cloud.pubsub.v1.Subscriber;
 import com.google.common.net.HttpHeaders;
+import com.google.pubsub.v1.ProjectSubscriptionName;
+import com.google.pubsub.v1.PubsubMessage;
 
 /**
  * The {@link NestUtility} is general utility class to help with all Nest SDM APIs
@@ -68,7 +75,7 @@ public class NestUtility {
 
     Thing thing;
 
-    private final Logger logger = LoggerFactory.getLogger(NestUtility.class);
+    private final static Logger logger = LoggerFactory.getLogger(NestUtility.class);
 
     private String deviceId;
     private String clientId;
@@ -223,6 +230,39 @@ public class NestUtility {
         }
 
     }
+
+    public static void pubSubEventHandler(String projectId, String subscriptionId) {
+        ProjectSubscriptionName subscriptionName = ProjectSubscriptionName.of(projectId, subscriptionId);
+
+        // Instantiate an asynchronous message receiver.
+        MessageReceiver receiver = (PubsubMessage message, AckReplyConsumer consumer) -> {
+            // Handle incoming message, then ack the received message.
+            logger.debug("Id: {}", message.getMessageId());
+            logger.debug("Data: {}", message.getData().toStringUtf8());
+
+            consumer.ack();
+        };
+
+        Subscriber subscriber = null;
+        try {
+            logger.debug("We are starting up the sub... subName {}", subscriptionName);
+            subscriber = Subscriber.newBuilder(subscriptionName, receiver).build();
+            // Start the subscriber.
+            logger.debug("Got the subscriber.. {}", subscriber.getSubscriptionNameString());
+            subscriber.startAsync().awaitRunning();
+            logger.debug("Listening for messages on {}", subscriptionName.toString());
+            // Allow the subscriber to run for 30s unless an unrecoverable error occurs.
+            subscriber.awaitTerminated(30, TimeUnit.SECONDS);
+        } catch (IllegalStateException e) {
+            logger.debug("illegal state exception {}", e.getMessage());
+
+        } catch (TimeoutException timeoutException) {
+            // Shut down the subscriber after 30s. Stop receiving messages.
+            logger.debug("Timedout exception {}", timeoutException.getMessage());
+            subscriber.stopAsync();
+        }
+    }
+
     /*
      * public int getStructures(String projectId, String accessToken) throws IOException {
      *

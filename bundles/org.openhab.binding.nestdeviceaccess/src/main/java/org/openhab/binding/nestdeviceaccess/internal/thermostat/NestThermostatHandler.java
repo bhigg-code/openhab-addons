@@ -88,6 +88,9 @@ public class NestThermostatHandler extends BaseThingHandler {
                     if (nestThermostat.setThermostatMode(command.toString())) {
                         logger.info("Thermostat: {} set command {} to {}", thing.getProperties().get("deviceName"),
                                 channelUID.toString(), command.toString());
+                        Thread.sleep(3000); // set up to handle delay with changing mode and current settings being
+                                            // updated
+                        refreshChannels();
                     }
                 }
             } else if (thermostatCurrentEcoMode.equals(channelUID.getId())) {
@@ -95,17 +98,43 @@ public class NestThermostatHandler extends BaseThingHandler {
                     if (nestThermostat.setThermostatEcoMode(command.toString())) {
                         logger.info("Thermostat: {} set command {} to {}", thing.getProperties().get("deviceName"),
                                 channelUID.toString(), command.toString());
+                        Thread.sleep(3000); // set up to handle delay with changing mode and current settings being
+                                            // updated
+                        refreshChannels();
                     }
                 }
             } else if (thermostatTargetTemperature.equals(channelUID.getId())) {
                 if (command.toString() != "REFRESH") {
-                    if (nestThermostat.setThermostatTargetTemperature(command.toString())) {
+                    if (nestThermostat.setThermostatTargetTemperature(Double.parseDouble(command.toString()), 0, 0,
+                            false)) {
                         logger.info("Thermostat: {} set command {} to {}", thing.getProperties().get("deviceName"),
                                 channelUID.toString(), command.toString());
+                        refreshChannels();
+                    }
+                }
+            } else if (thermostatMinimumTemperature.equals(channelUID.getId())) {
+                if (command.toString() != "REFRESH") {
+                    if (nestThermostat.setThermostatTargetTemperature(0, Double.parseDouble(command.toString()),
+                            nestThermostat.getMinMaxTemperature()[1], true)) {
+                        logger.info("Thermostat: {} set command {} to {}", thing.getProperties().get("deviceName"),
+                                channelUID.toString(), command.toString());
+                        refreshChannels();
+                    }
+                }
+            } else if (thermostatMaximumTemperature.equals(channelUID.getId())) {
+                if (command.toString() != "REFRESH") {
+                    if (nestThermostat.setThermostatTargetTemperature(0, nestThermostat.getMinMaxTemperature()[0],
+                            Double.parseDouble(command.toString()), true)) {
+                        logger.info("Thermostat: {} set command {} to {}", thing.getProperties().get("deviceName"),
+                                channelUID.toString(), command.toString());
+                        refreshChannels();
                     }
                 }
             }
         } catch (IOException e) {
+            logger.debug("handleMessage reporting exception {}", e.getMessage());
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
             logger.debug("handleMessage reporting exception {}", e.getMessage());
         }
     }
@@ -132,9 +161,9 @@ public class NestThermostatHandler extends BaseThingHandler {
                 State setTargetTempState = new DecimalType(nestThermostat.getTargetTemperature());
                 updateState("thermostatTargetTemperature", setTargetTempState);
                 State setMinTempState = new DecimalType(nestThermostat.getMinMaxTemperature()[0]);
-                updateState("thermostatMinimumTemperature", setTargetTempState);
+                updateState("thermostatMinimumTemperature", setMinTempState);
                 State setMaxTempState = new DecimalType(nestThermostat.getMinMaxTemperature()[1]);
-                updateState("thermostatMaximumTemperature", setTargetTempState);
+                updateState("thermostatMaximumTemperature", setMaxTempState);
                 State modeState = new StringType(nestThermostat.getThermostatMode());
                 updateState("thermostatCurrentMode", modeState);
                 State ecoModeState = new StringType(nestThermostat.getThermostatEcoMode());
@@ -181,6 +210,7 @@ public class NestThermostatHandler extends BaseThingHandler {
             try {
 
                 nestThermostat.initializeThermostat();
+                // NestUtility.pubSubEventHandler("openhab-nest-int-1601138253554", "sdm_pull_events");
                 // when done do:
                 thingReachable = nestThermostat.getDeviceStatus().equalsIgnoreCase("ONLINE");
                 if (thingReachable) {

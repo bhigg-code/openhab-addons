@@ -71,62 +71,107 @@ public class NestThermostat {
         deviceAvailableThermostatModes = new String[4];
 
         deviceType = jo.getString("type");
-        deviceCustomName = jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.Info").getString("customName");
-        deviceHumidityPercent = jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.Humidity")
-                .getInt("ambientHumidityPercent");
-        deviceStatus = jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.Connectivity").getString("status");
-        deviceFan = jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.Fan").getString("timerMode");
-        deviceCurrentThermostatMode = jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.ThermostatMode")
-                .getString("mode");
 
-        JSONArray jaAvailableModes = jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.ThermostatMode")
-                .getJSONArray("availableModes");
-
-        for (int nCount = 0; nCount < jaAvailableModes.length(); nCount++) {
-            // get Available Modes
-            deviceAvailableThermostatModes[nCount] = jaAvailableModes.getString(nCount);
+        if (jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.Info").has("customName")) {
+            deviceCustomName = jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.Info")
+                    .getString("customName");
         }
 
-        deviceThermostatEcoMode = jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.ThermostatEco")
-                .getString("mode");
-        deviceCurrentThermostatEcoHeatCelsius = jo.getJSONObject("traits")
-                .getJSONObject("sdm.devices.traits.ThermostatEco").getFloat("heatCelsius");
-        deviceCurrentThermostatEcoCoolCelsius = jo.getJSONObject("traits")
-                .getJSONObject("sdm.devices.traits.ThermostatEco").getFloat("coolCelsius");
-
-        JSONArray jaAvailableEcoModes = jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.ThermostatEco")
-                .getJSONArray("availableModes");
-
-        for (int nCount = 0; nCount < jaAvailableEcoModes.length(); nCount++) {
-            // get Available Modes
-            deviceAvailableThermostatEcoModes[nCount] = jaAvailableEcoModes.getString(nCount);
+        if (jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.Humidity").has("ambientHumidityPercent")) {
+            deviceHumidityPercent = jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.Humidity")
+                    .getInt("ambientHumidityPercent");
         }
 
-        deviceThermostatHVACStatus = jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.ThermostatHvac")
-                .getString("status");
+        if (jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.Connectivity").has("status")) {
+            deviceStatus = jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.Connectivity")
+                    .getString("status");
+        }
 
-        deviceTemperatureScaleSetting = jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.Settings")
-                .getString("temperatureScale");
+        if (jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.Fan").has("timerMode")) {
+            deviceFan = jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.Fan").getString("timerMode");
+        }
 
-        if (jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.ThermostatTemperatureSetpoint")
+        if (jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.ThermostatMode").has("mode")) {
+            deviceCurrentThermostatMode = jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.ThermostatMode")
+                    .getString("mode");
+        }
+
+        if (jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.ThermostatMode").has("availableModes")) {
+            JSONArray jaAvailableModes = jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.ThermostatMode")
+                    .getJSONArray("availableModes");
+
+            for (int nCount = 0; nCount < jaAvailableModes.length(); nCount++) {
+                // get Available Modes
+                deviceAvailableThermostatModes[nCount] = jaAvailableModes.getString(nCount);
+            }
+        }
+
+        if (jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.ThermostatEco").has("mode")) {
+            deviceThermostatEcoMode = jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.ThermostatEco")
+                    .getString("mode");
+        }
+
+        if (jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.ThermostatEco").has("heatCelsius")) {
+            deviceCurrentThermostatEcoHeatCelsius = jo.getJSONObject("traits")
+                    .getJSONObject("sdm.devices.traits.ThermostatEco").getFloat("heatCelsius");
+        }
+
+        if (jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.ThermostatEco").has("coolCelsius")) {
+            deviceCurrentThermostatEcoCoolCelsius = jo.getJSONObject("traits")
+                    .getJSONObject("sdm.devices.traits.ThermostatEco").getFloat("coolCelsius");
+        }
+
+        if (jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.ThermostatEco").has("availableModes")) {
+            JSONArray jaAvailableEcoModes = jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.ThermostatEco")
+                    .getJSONArray("availableModes");
+
+            for (int nCount = 0; nCount < jaAvailableEcoModes.length(); nCount++) {
+                // get Available Modes
+                deviceAvailableThermostatEcoModes[nCount] = jaAvailableEcoModes.getString(nCount);
+            }
+        }
+
+        if (jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.ThermostatHvac").has("status")) {
+            deviceThermostatHVACStatus = jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.ThermostatHvac")
+                    .getString("status");
+        }
+
+        if (jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.Settings").has("temperatureScale")) {
+
+            deviceTemperatureScaleSetting = jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.Settings")
+                    .getString("temperatureScale");
+        }
+
+        if ((jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.ThermostatTemperatureSetpoint")
+                .has("heatCelsius"))
+                && (jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.ThermostatTemperatureSetpoint")
+                        .has("coolCelsius"))) {
+
+            deviceCurrentThermostatHeatCelsius = jo.getJSONObject("traits")
+                    .getJSONObject("sdm.devices.traits.ThermostatTemperatureSetpoint").getFloat("heatCelsius");
+            deviceCurrentThermostatCoolCelsius = jo.getJSONObject("traits")
+                    .getJSONObject("sdm.devices.traits.ThermostatTemperatureSetpoint").getFloat("coolCelsius");
+            // logger.debug("Before temp change min {} max {}", deviceCurrentThermostatHeatCelsius,
+            // deviceCurrentThermostatCoolCelsius);
+        } // ThermostatMode = HEATCOOL
+        else if (jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.ThermostatTemperatureSetpoint")
                 .has("coolCelsius")) {
             deviceCurrentThermostatCoolCelsius = jo.getJSONObject("traits")
                     .getJSONObject("sdm.devices.traits.ThermostatTemperatureSetpoint").getFloat("coolCelsius");
+            // logger.debug("Before temp change TargetTemp {}", deviceCurrentThermostatCoolCelsius);
         } // ThermostatMode = Off or Heater
-        else {
-            deviceCurrentThermostatCoolCelsius = 0;
-        }
-        if (jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.ThermostatTemperatureSetpoint")
+        else if (jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.ThermostatTemperatureSetpoint")
                 .has("heatCelsius")) {
             deviceCurrentThermostatHeatCelsius = jo.getJSONObject("traits")
                     .getJSONObject("sdm.devices.traits.ThermostatTemperatureSetpoint").getFloat("heatCelsius");
+            // logger.debug("Before temp change TargetTemp {}", deviceCurrentThermostatHeatCelsius);
         } // ThermostatMode = Off or AC
-        else {
-            deviceCurrentThermostatHeatCelsius = 0;
-        }
 
-        deviceAmbientTemperatureSetting = jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.Temperature")
-                .getFloat("ambientTemperatureCelsius");
+        if (jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.Temperature")
+                .has("ambientTemperatureCelsius")) {
+            deviceAmbientTemperatureSetting = jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.Temperature")
+                    .getFloat("ambientTemperatureCelsius");
+        }
 
         JSONArray jaParentRelations = jo.getJSONArray("parentRelations");
 
@@ -142,16 +187,23 @@ public class NestThermostat {
         if ((deviceCurrentThermostatMode.equalsIgnoreCase("HEAT"))
                 && (!deviceThermostatEcoMode.equalsIgnoreCase("MANUAL_ECO"))) {
             deviceTargetTemperature = deviceCurrentThermostatHeatCelsius;
+            // logger.debug("updating heat.. {}", deviceTargetTemperature);
         } else if ((deviceCurrentThermostatMode.equalsIgnoreCase("COOL"))
                 && (!deviceThermostatEcoMode.equalsIgnoreCase("MANUAL_ECO"))) {
             deviceTargetTemperature = deviceCurrentThermostatCoolCelsius;
+            // logger.debug("updating cool..{}", deviceTargetTemperature);
         } else if (deviceThermostatEcoMode.equalsIgnoreCase("MANUAL_ECO")) {
             deviceMinTemperature = deviceCurrentThermostatEcoHeatCelsius;
             deviceMaxTemperature = deviceCurrentThermostatEcoCoolCelsius;
-        } else if ((deviceCurrentThermostatMode.equalsIgnoreCase("HEAT-COOL"))
+            // logger.debug("After temp change Eco TargetTemp {} min {} max {}", deviceTargetTemperature,
+            // deviceMinTemperature, deviceMaxTemperature);
+        } else if ((deviceCurrentThermostatMode.equalsIgnoreCase("HEATCOOL"))
                 && (!deviceThermostatEcoMode.equalsIgnoreCase("MANUAL_ECO"))) {
             deviceMinTemperature = deviceCurrentThermostatHeatCelsius;
             deviceMaxTemperature = deviceCurrentThermostatCoolCelsius;
+            // logger.debug("After temp change TargetTemp {} min {} max {}", deviceTargetTemperature,
+            // deviceMinTemperature,
+            // deviceMaxTemperature);
         }
 
         return (true);
@@ -182,28 +234,43 @@ public class NestThermostat {
         }
     }
 
-    public boolean setThermostatTargetTemperature(String setting) throws IOException {
+    public boolean setThermostatTargetTemperature(double value, double minValue, double maxValue, boolean typeRange)
+            throws IOException {
 
         String jsonContent = "";
-        double value = Double.parseDouble(setting);
-
-        if (getTemperatureScaleSetting().equalsIgnoreCase("FAHRENHEIT")) {
-            value = convertToCelsius(value);
-        }
-
-        if (getThermostatMode().equalsIgnoreCase("COOL")) {
-            jsonContent = "{\"command\" : \"sdm.devices.commands.ThermostatTemperatureSetpoint.SetCool\",\"params\" : {\"coolCelsius\" : "
-                    + String.valueOf(value) + "}}";
-        } else if (getThermostatMode().equalsIgnoreCase("HEAT")) {
-            jsonContent = "{\"command\" : \"sdm.devices.commands.ThermostatTemperatureSetpoint.SetHeat\",\"params\" : {\"heatCelsius\" : "
-                    + String.valueOf(value) + "}}";
-        } else {
-            // INVALID use case for setThermostatTargetTemperature..
-            return (false);
-        }
 
         try {
-            String jsonResponse = nestUtility.deviceExecuteCommand(thing.getProperties().get("deviceId"),
+
+            if (!typeRange) {
+                if ((getTemperatureScaleSetting().equalsIgnoreCase("FAHRENHEIT"))) {
+                    value = convertToCelsius(value);
+                }
+                if (getThermostatMode().equalsIgnoreCase("COOL")) {
+                    jsonContent = "{\"command\" : \"sdm.devices.commands.ThermostatTemperatureSetpoint.SetCool\",\"params\" : {\"coolCelsius\" : "
+                            + String.valueOf(value) + "}}";
+                } else if (getThermostatMode().equalsIgnoreCase("HEAT")) {
+                    jsonContent = "{\"command\" : \"sdm.devices.commands.ThermostatTemperatureSetpoint.SetHeat\",\"params\" : {\"heatCelsius\" : "
+                            + String.valueOf(value) + "}}";
+                } else {
+                    // INVALID use case for setThermostatTargetTemperature..
+                    return (false);
+                }
+            } else {
+                if ((getTemperatureScaleSetting().equalsIgnoreCase("FAHRENHEIT"))) {
+                    minValue = convertToCelsius(minValue);
+                    maxValue = convertToCelsius(maxValue);
+                }
+                if (getThermostatMode().equalsIgnoreCase("HEATCOOL")) {
+
+                    jsonContent = "{\"command\" : \"sdm.devices.commands.ThermostatTemperatureSetpoint.SetRange\",\"params\" : {\"heatCelsius\" : "
+                            + String.valueOf(minValue) + ",\"coolCelsius\" : " + String.valueOf(maxValue) + "}}";
+                } else {
+                    // INVALID use case for setThermostatTargetTemperature..
+                    return (false);
+                }
+            }
+
+            nestUtility.deviceExecuteCommand(thing.getProperties().get("deviceId"),
                     thing.getProperties().get("projectId"), thing.getProperties().get("accessToken"), jsonContent);
             return (true);
         } catch (IOException e) {
@@ -350,7 +417,6 @@ public class NestThermostat {
                     "https://smartdevicemanagement.googleapis.com/v1/enterprises/"
                             + thing.getProperties().get("projectId") + "/devices/"
                             + thing.getProperties().get("deviceId"));
-            JSONObject jo = new JSONObject(jsonContent);
 
             return (parseThermostatInfo(jsonContent));
 
