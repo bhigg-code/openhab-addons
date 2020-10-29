@@ -38,6 +38,7 @@ import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory;
 import org.eclipse.smarthome.core.thing.binding.ThingHandler;
 import org.eclipse.smarthome.core.thing.binding.ThingHandlerFactory;
+import org.openhab.binding.nestdeviceaccess.internal.doorbell.NestDoorbellHandler;
 import org.openhab.binding.nestdeviceaccess.internal.thermostat.NestThermostatHandler;
 import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
@@ -54,8 +55,8 @@ import org.slf4j.LoggerFactory;
 public class nestdeviceaccessHandlerFactory extends BaseThingHandlerFactory {
     private final Logger logger = LoggerFactory.getLogger(nestdeviceaccessHandlerFactory.class);
 
-    private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections
-            .unmodifiableSet(Stream.of(THING_TYPE_GENERIC, THING_TYPE_THERMOSTAT).collect(Collectors.toSet()));
+    private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections.unmodifiableSet(
+            Stream.of(THING_TYPE_GENERIC, THING_TYPE_THERMOSTAT, THING_TYPE_DOORBELL).collect(Collectors.toSet()));
 
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {
@@ -75,6 +76,10 @@ public class nestdeviceaccessHandlerFactory extends BaseThingHandlerFactory {
         if (thingTypeUID.equals(THING_TYPE_THERMOSTAT)) {
             logger.debug("createHandler reporting Thermostat..");
             return new NestThermostatHandler(thing);
+        }
+        if (thingTypeUID.equals(THING_TYPE_DOORBELL)) {
+            logger.debug("createHandler reporting Doorbell..");
+            return new NestDoorbellHandler(thing);
         }
         logger.info("createHandler never should have come here.. Returning null");
         return null;

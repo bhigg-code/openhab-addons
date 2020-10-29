@@ -282,7 +282,7 @@ public class NestThermostat {
         try {
             String url = "https://smartdevicemanagement.googleapis.com/v1/enterprises/"
                     + thing.getProperties().get("projectId") + "/devices";
-            nestUtility.getDeviceInfo(thing.getProperties().get("accessToken"), url);
+            nestUtility.getDeviceInfo(url);
             return (true);
         } catch (IOException e) {
             throw new IOException(e.getMessage());
@@ -413,10 +413,8 @@ public class NestThermostat {
     public boolean getThermostatInfo() throws IOException {
         try {
             String jsonContent;
-            jsonContent = nestUtility.getDeviceInfo(thing.getProperties().get("accessToken"),
-                    "https://smartdevicemanagement.googleapis.com/v1/enterprises/"
-                            + thing.getProperties().get("projectId") + "/devices/"
-                            + thing.getProperties().get("deviceId"));
+            jsonContent = nestUtility.getDeviceInfo("https://smartdevicemanagement.googleapis.com/v1/enterprises/"
+                    + thing.getProperties().get("projectId") + "/devices/" + thing.getProperties().get("deviceId"));
 
             return (parseThermostatInfo(jsonContent));
 

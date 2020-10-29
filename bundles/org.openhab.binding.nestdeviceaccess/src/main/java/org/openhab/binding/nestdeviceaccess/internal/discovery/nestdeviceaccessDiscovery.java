@@ -38,6 +38,8 @@ import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.auth.oauth2.AccessToken;
+
 /**
  * The {@link nestdeviceaccessDiscovery} is discovering devices from the SDM API
  *
@@ -58,7 +60,8 @@ public class nestdeviceaccessDiscovery extends AbstractDiscoveryService {
     private String clientId;
     private String refreshToken;
     private String authorizationToken;
-    private String accessToken;
+    private AccessToken googleAccessToken;
+    private long accessTokenExpiresIn;
     private boolean initialize;
 
     @Activate
@@ -87,24 +90,43 @@ public class nestdeviceaccessDiscovery extends AbstractDiscoveryService {
 
         // Let's check type
         for (int i = 0; i < devicesType.length; i++) {
-            if (devicesStatus[i].equalsIgnoreCase("online")) {
-                switch (devicesType[i]) {
-                    case "sdm.devices.types.THERMOSTAT":
+            switch (devicesType[i]) {
+                case "sdm.devices.types.THERMOSTAT":
+                    if (devicesStatus[i].equalsIgnoreCase("online")) {
                         typeId = THING_TYPE_THERMOSTAT;
                         ThingUID deviceThing = new ThingUID(typeId, devicesId[i]);
-                        Map<String, Object> properties = new HashMap<>(8);
+                        Map<String, Object> properties = new HashMap<>(9);
                         properties.put("deviceId", devicesId[i]);
                         properties.put("deviceName", devicesName[i]);
                         properties.put("refreshToken", refreshToken);
                         properties.put("clientId", clientId);
                         properties.put("clientSecret", clientSecret);
-                        properties.put("accessToken", accessToken);
+                        properties.put("accessToken", googleAccessToken.getTokenValue());
+                        properties.put("accessTokenExpiration", googleAccessToken.getExpirationTime());
                         properties.put("projectId", projectId);
                         DiscoveryResult result = DiscoveryResultBuilder.create(deviceThing).withProperties(properties)
                                 .withLabel("Nest " + devicesName[i] + " Thermostat").build();
                         thingDiscovered(result);
                         logger.info("nestdeviceaccessDiscovery adding Thermostat: [{}] to inbox", devicesName[i]);
-                }
+                        break;
+                    }
+                case "sdm.devices.types.DOORBELL":
+                    typeId = THING_TYPE_DOORBELL;
+                    ThingUID deviceThing = new ThingUID(typeId, devicesId[i]);
+                    Map<String, Object> properties = new HashMap<>(9);
+                    properties.put("deviceId", devicesId[i]);
+                    properties.put("deviceName", devicesName[i]);
+                    properties.put("refreshToken", refreshToken);
+                    properties.put("clientId", clientId);
+                    properties.put("clientSecret", clientSecret);
+                    properties.put("accessToken", googleAccessToken.getTokenValue());
+                    properties.put("accessTokenExpiration", googleAccessToken.getExpirationTime());
+                    properties.put("projectId", projectId);
+                    DiscoveryResult result = DiscoveryResultBuilder.create(deviceThing).withProperties(properties)
+                            .withLabel("Nest " + devicesName[i] + " Doorbell").build();
+                    thingDiscovered(result);
+                    logger.info("nestdeviceaccessDiscovery adding Doorbell: [{}] to inbox", devicesName[i]);
+                    break;
             }
         }
     }
@@ -126,21 +148,20 @@ public class nestdeviceaccessDiscovery extends AbstractDiscoveryService {
 
         try {
 
-            nestUtility = new NestUtility(projectId, clientId, clientSecret, refreshToken, accessToken);
+            nestUtility = new NestUtility(projectId, clientId, clientSecret, refreshToken, googleAccessToken);
             if ((!authorizationToken.equals("")) && (refreshToken.equals(""))) {
                 // initial authorization request. We need to get a refresh token
                 logger.debug("Initial Access Token being retrieved...");
                 String[] tokens = new String[2];
                 tokens = nestUtility.requestAccessToken(clientId, clientSecret, authorizationToken);
-                accessToken = tokens[0];
-                refreshToken = tokens[1];
+
             } else {
                 // accessToken is typically stale.. Getting fresh on initialization
-                accessToken = nestUtility.refreshAccessToken(refreshToken, clientId, clientSecret);
+                googleAccessToken = nestUtility.refreshAccessToken(refreshToken, clientId, clientSecret);
             }
             String url = "https://smartdevicemanagement.googleapis.com/v1/enterprises/" + projectId + "/devices";
             // get devices for discovery
-            String jsonContent = nestUtility.getDeviceInfo(accessToken, url);
+            String jsonContent = nestUtility.getDeviceInfo(url);
 
             JSONObject jo = new JSONObject(jsonContent);
             JSONArray ja = jo.getJSONArray("devices");
@@ -155,8 +176,10 @@ public class nestdeviceaccessDiscovery extends AbstractDiscoveryService {
                 devicesName[i] = ja.getJSONObject(i).getString("name");
                 devicesId[i] = devicesName[i].substring(devicesName[i].lastIndexOf("/") + 1, devicesName[i].length());
                 devicesType[i] = ja.getJSONObject(i).getString("type");
-                devicesStatus[i] = ja.getJSONObject(i).getJSONObject("traits")
-                        .getJSONObject("sdm.devices.traits.Connectivity").getString("status");
+                if (ja.getJSONObject(i).getJSONObject("traits").has("sdm.devices.traits.Connectivity")) {
+                    devicesStatus[i] = ja.getJSONObject(i).getJSONObject("traits")
+                            .getJSONObject("sdm.devices.traits.Connectivity").getString("status");
+                }
                 JSONArray jaParentRelations = ja.getJSONObject(i).getJSONArray("parentRelations");
 
                 for (int nCount = 0; nCount < jaParentRelations.length(); nCount++) {
@@ -205,7 +228,8 @@ public class nestdeviceaccessDiscovery extends AbstractDiscoveryService {
      */
     public nestdeviceaccessDiscovery() {
         super(Collections.unmodifiableSet(
-                Stream.of(THING_TYPE_GENERIC, THING_TYPE_THERMOSTAT).collect(Collectors.toSet())), 30, false);
+                Stream.of(THING_TYPE_GENERIC, THING_TYPE_THERMOSTAT, THING_TYPE_DOORBELL).collect(Collectors.toSet())),
+                30, false);
         logger.debug("nestdeviceaccessDiscovery constructor..");
     }
 }

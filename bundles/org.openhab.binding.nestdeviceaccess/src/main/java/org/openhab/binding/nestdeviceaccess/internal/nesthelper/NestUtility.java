@@ -16,6 +16,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -35,6 +39,7 @@ import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.auth.oauth2.AccessToken;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.cloud.pubsub.v1.Subscriber;
@@ -58,18 +63,34 @@ public class NestUtility {
             projectId = this.thing.getProperties().get("projectId");
             refreshToken = this.thing.getProperties().get("refreshToken");
             accessToken = this.thing.getProperties().get("accessToken");
+            accessTokenExpiration = this.thing.getProperties().get("accessTokenExpiration");
+
+            SimpleDateFormat format = new SimpleDateFormat("E MMM dd HH:mm:ss zzz yyyy");
+            try {
+                if (accessTokenExpiration != null) {
+                    Date date = format.parse(accessTokenExpiration);
+                    googleAccessToken = new AccessToken(accessToken, date);
+                } else {
+                    googleAccessToken = refreshAccessToken(refreshToken, clientId, clientSecret);
+                    thing.setProperty("accessTokenExpiration", googleAccessToken.getExpirationTime().toString());
+                }
+            } catch (ParseException e) {
+                logger.debug("NestUtility constructor failed to parse date {}", e.getMessage());
+            } catch (IOException e) {
+                logger.debug("NestUtility constructor failed with exception {}", e.getMessage());
+            }
         }
     }
 
     public NestUtility(String projectId, String clientId, String clientSecret, String refreshToken,
-            String accessToken) {
+            AccessToken accessToken) {
         // secondary constructor for null thing and discovery service/non-basehandlers
         if (thing == null) {
             this.projectId = projectId;
             this.clientId = clientId;
             this.clientSecret = clientSecret;
             this.refreshToken = refreshToken;
-            this.accessToken = accessToken;
+            NestUtility.googleAccessToken = accessToken;
         }
     }
 
@@ -83,8 +104,40 @@ public class NestUtility {
     private String projectId;
     private String refreshToken;
     private String accessToken;
+    private String accessTokenExpiration;
+    private long accessTokenExpiresIn;
+    private static AccessToken googleAccessToken;
 
-    // helper local vars. Will set global properies file
+    // helper local vars. Will set global properties file
+
+    public AccessToken getAccessToken() throws IOException {
+        try {
+            if (isAccessTokenExpired()) {
+                // we need to refresh the access token
+                return (refreshAccessToken(refreshToken, clientId, clientSecret));
+            } else {
+                return (googleAccessToken);
+            }
+        } catch (IOException e) {
+            throw new IOException(e.getMessage());
+        }
+    }
+
+    public AccessToken setAccessToken(String accessToken, int accessTokenExpiresIn) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.add(Calendar.SECOND, accessTokenExpiresIn);
+        googleAccessToken = new AccessToken(accessToken, calendar.getTime());
+        return (googleAccessToken);
+    }
+
+    public boolean isAccessTokenExpired() {
+
+        if (googleAccessToken.getExpirationTime().compareTo(Calendar.getInstance().getTime()) > 0) {
+            return (true);
+        } else {
+            return (false);
+        }
+    }
 
     public String deviceExecuteCommand(String deviceId, String projectId, String accessToken, String requestBody)
             throws IOException {
@@ -96,68 +149,72 @@ public class NestUtility {
                             + "/devices/" + deviceId + ":executeCommand"),
                     ByteArrayContent.fromString("application/json", requestBody));
             request.getHeaders().set(HttpHeaders.CONTENT_TYPE, "application/json");
-            request.getHeaders().set(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
+            request.getHeaders().set(HttpHeaders.AUTHORIZATION, "Bearer " + getAccessToken().getTokenValue());
 
             HttpResponse response = request.execute();
             return (convertStreamtoString(response.getContent()));
         } catch (IOException e) {
-            int statusCode = Integer.parseInt(e.getMessage().substring(0, 3));
-            if (statusCode == 401) {
-                // get access token refreshed
-                logger.debug("deviceExecuteCommand reporting access token is expired..");
-                accessToken = refreshAccessToken(refreshToken, clientId, clientSecret);
-                logger.debug("deviceExecuteCommand reporting access token refresh successful..");
-                return (deviceExecuteCommand(deviceId, projectId, accessToken, requestBody)); // returns error code in
-                                                                                              // string
-                // format. Did this to
-                // commoditize the
-                // return value for successful JSON response
-            }
+            // int statusCode = Integer.parseInt(e.getMessage().substring(0, 3));
+            /*
+             * if (statusCode == 401) {
+             * // get access token refreshed
+             * logger.debug("deviceExecuteCommand reporting access token is expired..");
+             * refreshAccessToken(refreshToken, clientId, clientSecret);
+             * logger.debug("deviceExecuteCommand reporting access token refresh successful..");
+             * return (deviceExecuteCommand(deviceId, projectId, getAccessToken().getTokenValue(), requestBody)); //
+             * returns
+             */
+            // error
             throw new IOException(e.getMessage());
         }
 
     }
 
-    public String getDeviceInfo(String accessToken, String url) throws IOException {
+    public String getDeviceInfo(String url) throws IOException {
         try {
             HttpTransport transport = new NetHttpTransport();
             HttpRequest request = transport.createRequestFactory().buildGetRequest(new GenericUrl(url));
 
             request.getHeaders().set(HttpHeaders.CONTENT_TYPE, "application/json");
-            request.getHeaders().set(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
+            request.getHeaders().set(HttpHeaders.AUTHORIZATION, "Bearer " + getAccessToken().getTokenValue());
             HttpResponse response = request.execute();
 
             return (convertStreamtoString(response.getContent()));
         } catch (IOException e) {
-            int statusCode = Integer.parseInt(e.getMessage().substring(0, 3));
-            if (statusCode == 401) {
-                // get access token refreshed
-                logger.debug("deviceGetInfo reporting access token is expired..");
-                accessToken = refreshAccessToken(refreshToken, clientId, clientSecret);
-                logger.debug("deviceGetInfo reporting access token refresh successful..");
-
-                return (getDeviceInfo(accessToken, url)); // returns error code in string
-                                                          // format. Did this to
-                // commoditize the
-                // return value for successful JSON response
-            }
+            /*
+             * int statusCode = Integer.parseInt(e.getMessage().substring(0, 3));
+             *
+             * if (statusCode == 401) {
+             * // get access token refreshed
+             * logger.debug("deviceGetInfo reporting access token is expired..");
+             * accessToken = refreshAccessToken(refreshToken, clientId, clientSecret);
+             * logger.debug("deviceGetInfo reporting access token refresh successful..");
+             *
+             * return (getDeviceInfo(accessToken, url)); // returns error code in string
+             * // format. Did this to
+             * // commoditize the
+             * // return value for successful JSON response
+             */
             throw new IOException(e.getMessage()); // never should get here unless there is a problem
         }
     }
 
-    public String refreshAccessToken(String refreshToken, String clientId, String clientSecret) throws IOException {
+    public AccessToken refreshAccessToken(String refreshToken, String clientId, String clientSecret)
+            throws IOException {
         try {
+            String accessToken;
             TokenResponse response = new GoogleRefreshTokenRequest(new NetHttpTransport(), new JacksonFactory(),
                     refreshToken, clientId, clientSecret).execute();
-            logger.info("Access Token: {}", response.getAccessToken());
-            logger.info("Refresh Token Lifespan: {}", response.getExpiresInSeconds());
+            // logger.info("Access Token: {}", response.getAccessToken());
+            // logger.info("Refresh Token Lifespan: {}", response.getExpiresInSeconds());
             accessToken = response.getAccessToken();
-
+            accessTokenExpiresIn = response.getExpiresInSeconds();
+            googleAccessToken = setAccessToken(accessToken, (int) accessTokenExpiresIn);
             if (thing != null) {
                 thing.setProperty("accessTokenExpiresIn", response.getExpiresInSeconds().toString());
-                thing.setProperty("accessToken", accessToken);
+                thing.setProperty("accessToken", googleAccessToken.getTokenValue());
             }
-            return (accessToken);
+            return (googleAccessToken);
         } catch (TokenResponseException e) {
             logger.debug("refreshAccessToken threw an exception {}", e.getDetails().getError());
             if (e.getDetails().getErrorDescription() != null) {
@@ -170,16 +227,25 @@ public class NestUtility {
     public String[] requestAccessToken(String clientId, String clientSecret, String authorizationToken)
             throws IOException {
         try {
+            String accessToken;
             String[] tokens = new String[2];
             TokenResponse response = new AuthorizationCodeTokenRequest(new NetHttpTransport(), new JacksonFactory(),
                     new GenericUrl("https://www.googleapis.com/oauth2/v4/token"), authorizationToken)
                             .setRedirectUri("https://www.google.com")
                             .setClientAuthentication(new BasicAuthentication(clientId, clientSecret)).execute();
-            logger.info("Access Token: {}", response.getAccessToken());
-            logger.info("Refresh Token: {}", response.getRefreshToken());
-            logger.info("Refresh Token Lifespan: {}", response.getExpiresInSeconds());
+            // logger.info("Access Token: {}", response.getAccessToken());
+            // logger.info("Refresh Token: {}", response.getRefreshToken());
+            // logger.info("Refresh Token Lifespan: {}", response.getExpiresInSeconds());
             accessToken = response.getAccessToken();
             refreshToken = response.getRefreshToken();
+
+            accessTokenExpiresIn = response.getExpiresInSeconds();
+            Calendar calendar = Calendar.getInstance();
+            calendar.add(Calendar.SECOND, (int) accessTokenExpiresIn);
+
+            // Construct a proper AccessToken
+            googleAccessToken = new AccessToken(accessToken, calendar.getTime());
+
             tokens[0] = accessToken;
             tokens[1] = refreshToken;
             if (thing != null) {
@@ -211,7 +277,7 @@ public class NestUtility {
 
     }
 
-    public String getDevices(String projectId, String accessToken) throws IOException {
+    public String getDevices(String projectId, AccessToken accessToken) throws IOException {
 
         try {
             HttpTransport transport = new NetHttpTransport();
@@ -219,7 +285,7 @@ public class NestUtility {
                     "https://smartdevicemanagement.googleapis.com/v1/enterprises/" + projectId + "/devices"));
 
             request.getHeaders().set(HttpHeaders.CONTENT_TYPE, "application/json");
-            request.getHeaders().set(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
+            request.getHeaders().set(HttpHeaders.AUTHORIZATION, "Bearer " + getAccessToken().getTokenValue());
             HttpResponse response = request.execute();
 
             return (convertStreamtoString(response.getContent()));
@@ -246,6 +312,8 @@ public class NestUtility {
         Subscriber subscriber = null;
         try {
             logger.debug("We are starting up the sub... subName {}", subscriptionName);
+            // GoogleCredentials credentials=GoogleCredentials.newBuilder().setAccessToken(accessToken);
+            // CredentialProvider=credentialProvider=FixedCredentialsProvider.create(credentials)
             subscriber = Subscriber.newBuilder(subscriptionName, receiver).build();
             // Start the subscriber.
             logger.debug("Got the subscriber.. {}", subscriber.getSubscriptionNameString());

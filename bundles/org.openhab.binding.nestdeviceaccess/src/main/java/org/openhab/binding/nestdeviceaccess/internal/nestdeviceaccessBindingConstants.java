@@ -29,6 +29,7 @@ public class nestdeviceaccessBindingConstants {
     // List of all Thing Type UIDs
     public static final ThingTypeUID THING_TYPE_GENERIC = new ThingTypeUID(BINDING_ID, "nest-device-access");
     public static final ThingTypeUID THING_TYPE_THERMOSTAT = new ThingTypeUID(BINDING_ID, "nest-device-thermostat");
+    public static final ThingTypeUID THING_TYPE_DOORBELL = new ThingTypeUID(BINDING_ID, "nest-device-doorbell");
     // List of all Channel ids
     public static final String thermostatName = "thermostatName";
     public static final String thermostatCurrentMode = "thermostatCurrentMode";
@@ -37,4 +38,5 @@ public class nestdeviceaccessBindingConstants {
     public static final String thermostatMinimumTemperature = "thermostatMinimumTemperature";
     public static final String thermostatMaximumTemperature = "thermostatMaximumTemperature";
     public static final String thermostatScaleSetting = "thermostatScaleSetting";
+    public static final String doorbellName = "doorbellName";
 }
