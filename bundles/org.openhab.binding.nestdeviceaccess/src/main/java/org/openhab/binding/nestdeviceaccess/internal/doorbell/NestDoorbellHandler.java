@@ -160,6 +160,7 @@ public class NestDoorbellHandler extends BaseThingHandler {
 
                 nestDoorbell.initializeDoorbell();
                 // NestUtility.pubSubEventHandler("openhab-nest-int-1601138253554", "sdm_pull_events");
+                // NestUtility.listSubscriptionInProjectExample(config.projectId);
                 // when done do:
                 thingReachable = true; // No status on doorbell
                 if (thingReachable) {

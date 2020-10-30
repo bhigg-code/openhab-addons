@@ -19,7 +19,10 @@ import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -39,13 +42,22 @@ import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.gax.core.CredentialsProvider;
+import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.auth.oauth2.AccessToken;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.cloud.pubsub.v1.Subscriber;
+import com.google.cloud.pubsub.v1.SubscriptionAdminClient;
+import com.google.cloud.pubsub.v1.SubscriptionAdminSettings;
+import com.google.common.collect.Lists;
 import com.google.common.net.HttpHeaders;
+import com.google.pubsub.v1.ProjectName;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
+import com.google.pubsub.v1.Subscription;
 
 /**
  * The {@link NestUtility} is general utility class to help with all Nest SDM APIs
@@ -132,7 +144,7 @@ public class NestUtility {
 
     public boolean isAccessTokenExpired() {
 
-        if (googleAccessToken.getExpirationTime().compareTo(Calendar.getInstance().getTime()) > 0) {
+        if (googleAccessToken.getExpirationTime().compareTo(Calendar.getInstance().getTime()) < 0) {
             return (true);
         } else {
             return (false);
@@ -297,24 +309,59 @@ public class NestUtility {
 
     }
 
+    public static void listSubscriptionInProjectExample(String projectId) throws IOException {
+        GoogleCredentials credentials = GoogleCredentials.create(googleAccessToken)
+                .createScoped(Lists.newArrayList("https://www.googleapis.com/auth/cloud-platform"));
+
+        Collection<String> scopes = Collections.singleton("https://www.googleapis.com/auth/pubsub");
+
+        credentials.createScoped(scopes);
+        CredentialsProvider cred = FixedCredentialsProvider
+                .create(OAuth2Credentials.newBuilder().setAccessToken(googleAccessToken).build());
+
+        SubscriptionAdminSettings.Builder subscriptionAdminSettingsBuilder = SubscriptionAdminSettings.newBuilder();
+        subscriptionAdminSettingsBuilder.setCredentialsProvider(cred);
+        SubscriptionAdminSettings subscriptionAdminSettings = subscriptionAdminSettingsBuilder.build();
+
+        try (SubscriptionAdminClient subscriptionAdminClient = SubscriptionAdminClient
+                .create(subscriptionAdminSettings)) {
+            ProjectName projectName = ProjectName.of(projectId);
+            for (Subscription subscription : subscriptionAdminClient.listSubscriptions(projectName).iterateAll()) {
+                logger.debug("List Subscription {}", subscription.getName());
+            }
+            logger.debug("Listed all the subscriptions in the project.");
+        }
+    }
+
     public static void pubSubEventHandler(String projectId, String subscriptionId) {
         ProjectSubscriptionName subscriptionName = ProjectSubscriptionName.of(projectId, subscriptionId);
 
         // Instantiate an asynchronous message receiver.
-        MessageReceiver receiver = (PubsubMessage message, AckReplyConsumer consumer) -> {
-            // Handle incoming message, then ack the received message.
-            logger.debug("Id: {}", message.getMessageId());
-            logger.debug("Data: {}", message.getData().toStringUtf8());
-
-            consumer.ack();
+        ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
+        MessageReceiver receiver = new MessageReceiver() {
+            @Override
+            public void receiveMessage(PubsubMessage message, final AckReplyConsumer consumer) {
+                logger.debug("got message: {}", message.getData().toStringUtf8());
+                executor.schedule(new Runnable() {
+                    @Override
+                    public void run() {
+                        consumer.ack();
+                    }
+                }, 30, TimeUnit.SECONDS);
+            }
         };
-
         Subscriber subscriber = null;
         try {
+
             logger.debug("We are starting up the sub... subName {}", subscriptionName);
-            // GoogleCredentials credentials=GoogleCredentials.newBuilder().setAccessToken(accessToken);
-            // CredentialProvider=credentialProvider=FixedCredentialsProvider.create(credentials)
-            subscriber = Subscriber.newBuilder(subscriptionName, receiver).build();
+            GoogleCredentials credentials = GoogleCredentials.create(googleAccessToken);
+
+            Collection<String> scopes = Collections.singleton("https://www.googleapis.com/auth/pubsub");
+
+            credentials.createScoped(scopes);
+            CredentialsProvider cred = FixedCredentialsProvider
+                    .create(OAuth2Credentials.newBuilder().setAccessToken(googleAccessToken).build());
+            subscriber = Subscriber.newBuilder(subscriptionName, receiver).setCredentialsProvider(cred).build();
             // Start the subscriber.
             logger.debug("Got the subscriber.. {}", subscriber.getSubscriptionNameString());
             subscriber.startAsync().awaitRunning();
@@ -328,6 +375,7 @@ public class NestUtility {
             // Shut down the subscriber after 30s. Stop receiving messages.
             logger.debug("Timedout exception {}", timeoutException.getMessage());
             subscriber.stopAsync();
+
         }
     }
 
