@@ -92,7 +92,10 @@ refreshInterval is used to tell the thing to refresh status (in seconds) and is 
 | thermostatScaleSetting        | Text                   | This is the Scale setting for the Thermostat (FAHERNHEIT or CELSIUS)
 | ----------------------------------------------------------------|
 |--------- Doorbell Thing-----------------------------------------|
-|doorbellEventImage             | Image                  | This is a generated image based on an event. The event has an event ID that is required to generate the image. |
+|doorbellSoundEventImage             | Image                  | This is a generated image based on a Sound event. The event has an event ID that is required to generate the image. |
+|doorbellMotionEventImage             | Image                  | This is a generated image based on a Motion event. The event has an event ID that is required to generate the image. |
+|doorbellPersonEventImage             | Image                  | This is a generated image based on a Person event. The event has an event ID that is required to generate the image. |
+|doorbellChimeEventImage             | Image                  | This is a generated image based on a Chime event. The event has an event ID that is required to generate the image. |
 | doorbellChimeLastEventTime    | Text                   | This is the time a door Chime event was last received |
 | doorbellChimeEvent            | Switch                 | This is a switch that flips when a Chime event is received |
 | doorbellPersonEvent           | Switch                 | This is a switch that flips when a Person event is received |
@@ -120,24 +123,23 @@ Frame label="Dining Room Thermostat" icon="temperature"{
 Text label="Front Door" icon="door"{
         Frame label="Doorbell" icon="door"{
             Switch item=NestFrontDoorDoorbell_Has_Chime label="Has Chime" mappings=[OFF="OFF",ON="ON"]
-            Image item=NestFrontDoorDoorbell_EventImage label="Front Door Image" visibility=[NestFrontDoorDoorbell_Has_Chime=="ON"]                     
+            Image item=NestFrontDoorDoorbell_ChimeEventImage label="Front Door Image" visibility=[NestFrontDoorDoorbell_Has_Chime=="ON"]                        
             Text item=NestFrontDoorDoorbell_ChimeLastEventTime label="Last Chime Event Time" visibility=[NestFrontDoorDoorbell_Has_Chime=="ON"]            
             Switch item=NestFrontDoorDoorbell_Has_Sound label="Has Sound" mappings=[OFF="OFF",ON="ON"]
-            Image item=NestFrontDoorDoorbell_EventImage label="Front Door Image" visibility=[NestFrontDoorDoorbell_Has_Sound=="ON"]                     
+            Image item=NestFrontDoorDoorbell_SoundEventImage label="Front Door Image" visibility=[NestFrontDoorDoorbell_Has_Sound=="ON"]                        
             Text item=NestFrontDoorDoorbell_SoundLastEventTime label="Last Chime Event Time" visibility=[NestFrontDoorDoorbell_Has_Sound=="ON"]            
             Switch item=NestFrontDoorDoorbell_Has_Motion label="Has Motion" mappings=[OFF="OFF",ON="ON"]                        
-            Image item=NestFrontDoorDoorbell_EventImage label="Front Door Image" visibility=[NestFrontDoorDoorbell_Has_Motion=="ON"]                        
+            Image item=NestFrontDoorDoorbell_MotionEventImage label="Front Door Image" visibility=[NestFrontDoorDoorbell_Has_Motion=="ON"]                      
             Text item=NestFrontDoorDoorbell_MotionLastEventTime label="Last Motion Event Time" visibility=[NestFrontDoorDoorbell_Has_Motion=="ON"]            
             Switch item=NestFrontDoorDoorbell_Has_Person label="Has Person" mappings=[OFF="OFF",ON="ON"]                        
-            Image item=NestFrontDoorDoorbell_EventImage label="Front Door Image" visibility=[NestFrontDoorDoorbell_Has_Person=="ON"]                        
+            Image item=NestFrontDoorDoorbell_PersonEventImage label="Front Door Image" visibility=[NestFrontDoorDoorbell_Has_Person=="ON"]                      
             Text item=NestFrontDoorDoorbell_PersonLastEventTime label="Last Motion Event Time" visibility=[NestFrontDoorDoorbell_Has_Person=="ON"]            
             Text item=NestFrontDoorDoorbell_LiveStreamExpiration label="Live Stream Expiration"
             Text item=NestFrontDoorDoorbell_LiveStreamUrl label="Live Stream URL"
             Text item=NestFrontDoorDoorbell_LiveStreamExtensionToken label="Live Steam Extension Token"
             Text item=NestFrontDoorDoorbell_LiveStreamCurrentToken label="Live Steam Token"
         }
-    }        
-
+    }
 
 ## Any custom content here!
 

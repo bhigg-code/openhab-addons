@@ -36,6 +36,7 @@ import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
+import org.eclipse.smarthome.core.types.RefreshType;
 import org.eclipse.smarthome.core.types.State;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -99,31 +100,65 @@ public class NestDoorbellHandler extends BaseThingHandler {
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
         // logger.debug("handleCommand reporting {},{}", channelUID.getId(), command.toString());
-        /*
-         * try {
-         *
-         * if (doorbellName.equals(channelUID.getId())) {
-         *
-         * if (command instanceof RefreshType) {
-         * // TODO: handle data refresh
-         *
-         * logger.debug("handleCommand reporting {}", command.toString());
-         * }
-         *
-         * // TODO: handle command
-         *
-         * // Note: if communication with thing fails for some reason,
-         * // indicate that by setting the status with detail information:
-         * // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
-         * // "Could not control device at IP address x.x.x.x");
-         * }
-         * } catch (IOException e) {
-         * logger.debug("handleMessage reporting exception {}", e.getMessage());
-         * } catch (InterruptedException e) {
-         * // TODO Auto-generated catch block
-         * logger.debug("handleMessage reporting exception {}", e.getMessage());
-         * }
-         */
+
+        if (doorbellName.equals(channelUID.getId())) {
+
+            if (command instanceof RefreshType) {
+                // TODO: handle data refresh
+
+                logger.debug("handleCommand reporting {}", command.toString());
+            }
+
+        } else if (doorbellSoundEvent.equals(channelUID.getId())) {
+            if (command.toString() != "REFRESH") {
+                if (command.toString() == "OFF") {
+                    updateState(doorbellSoundEvent, OnOffType.OFF);
+                    logger.info("Doorbell: {} set switch to {}", thing.getProperties().get("deviceName"),
+                            command.toString());
+                } else {
+                    updateState(doorbellSoundEvent, OnOffType.ON);
+                    logger.info("Doorbell: {} set switch to {}", thing.getProperties().get("deviceName"),
+                            command.toString());
+                }
+            }
+        } else if (doorbellMotionEvent.equals(channelUID.getId())) {
+            if (command.toString() != "REFRESH") {
+                if (command.toString() == "OFF") {
+                    updateState(doorbellMotionEvent, OnOffType.OFF);
+                    logger.info("Doorbell: {} set switch to {}", thing.getProperties().get("deviceName"),
+                            command.toString());
+                } else {
+                    updateState(doorbellMotionEvent, OnOffType.ON);
+                    logger.info("Doorbell: {} set switch to {}", thing.getProperties().get("deviceName"),
+                            command.toString());
+                }
+            }
+        } else if (doorbellPersonEvent.equals(channelUID.getId())) {
+            if (command.toString() != "REFRESH") {
+                if (command.toString() == "OFF") {
+                    updateState(doorbellPersonEvent, OnOffType.OFF);
+                    logger.info("Doorbell: {} set switch to {}", thing.getProperties().get("deviceName"),
+                            command.toString());
+                } else {
+                    updateState(doorbellPersonEvent, OnOffType.ON);
+                    logger.info("Doorbell: {} set switch to {}", thing.getProperties().get("deviceName"),
+                            command.toString());
+                }
+            }
+        } else if (doorbellChimeEvent.equals(channelUID.getId())) {
+            if (command.toString() != "REFRESH") {
+                if (command.toString() == "OFF") {
+                    updateState(doorbellChimeEvent, OnOffType.OFF);
+                    logger.info("Doorbell: {} set switch to {}", thing.getProperties().get("deviceName"),
+                            command.toString());
+                } else {
+                    updateState(doorbellChimeEvent, OnOffType.ON);
+                    logger.info("Doorbell: {} set switch to {}", thing.getProperties().get("deviceName"),
+                            command.toString());
+                }
+            }
+        }
+
     }
 
     void refreshChannels() {
@@ -293,7 +328,7 @@ public class NestDoorbellHandler extends BaseThingHandler {
                             updateState(doorbellSoundLastEventTime, newState);
                             if (nestDoorbell.isImageValid(messageTime)) {
                                 soundImage = nestDoorbell.getCameraImage(eventId);
-                                updateState(doorbellEventImage, soundImage);
+                                updateState(doorbellSoundEventImage, soundImage);
                                 logger.debug("dispatchMessage processed a Sound camera image with data {}", soundImage);
                                 updateLiveStreamChannels();
                             }
@@ -312,7 +347,7 @@ public class NestDoorbellHandler extends BaseThingHandler {
                             updateState(doorbellPersonLastEventTime, newState);
                             if (nestDoorbell.isImageValid(messageTime)) {
                                 personImage = nestDoorbell.getCameraImage(eventId);
-                                updateState(doorbellEventImage, personImage);
+                                updateState(doorbellPersonEventImage, personImage);
                                 logger.debug("dispatchMessage processed a Person camera image with data {}",
                                         personImage);
                                 updateLiveStreamChannels();
@@ -332,7 +367,7 @@ public class NestDoorbellHandler extends BaseThingHandler {
                             updateState(doorbellMotionLastEventTime, newState);
                             if (nestDoorbell.isImageValid(messageTime)) {
                                 motionImage = nestDoorbell.getCameraImage(eventId);
-                                updateState(doorbellEventImage, motionImage);
+                                updateState(doorbellMotionEventImage, motionImage);
                                 logger.debug("dispatchMessage processed a Motion camera image with data {}",
                                         motionImage);
                                 updateLiveStreamChannels();
@@ -351,7 +386,7 @@ public class NestDoorbellHandler extends BaseThingHandler {
                             updateState(doorbellChimeLastEventTime, newState);
                             if (nestDoorbell.isImageValid(messageTime)) {
                                 chimeImage = nestDoorbell.getCameraImage(eventId);
-                                updateState(doorbellEventImage, chimeImage);
+                                updateState(doorbellChimeEventImage, chimeImage);
                                 logger.debug("dispatchMessage processed a Chime camera image with data {}", chimeImage);
                                 updateLiveStreamChannels();
                             }
