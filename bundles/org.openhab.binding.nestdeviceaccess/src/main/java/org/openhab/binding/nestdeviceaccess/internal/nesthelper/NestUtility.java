@@ -57,6 +57,9 @@ public class NestUtility {
             refreshToken = this.thing.getProperties().get("refreshToken");
             accessToken = this.thing.getProperties().get("accessToken");
             accessTokenExpiration = this.thing.getProperties().get("accessTokenExpiration");
+            serviceAccountPath = this.thing.getProperties().get("serviceAccountPath");
+            subscriptionId = this.thing.getProperties().get("subscriptionId");
+            pubsubProjectId = this.thing.getProperties().get("pubsubProjectId");
 
             SimpleDateFormat format = new SimpleDateFormat("E MMM dd HH:mm:ss zzz yyyy");
             try {
@@ -72,6 +75,7 @@ public class NestUtility {
             } catch (IOException e) {
                 logger.debug("NestUtility constructor failed with exception {}", e.getMessage());
             }
+
         }
     }
 
@@ -83,7 +87,7 @@ public class NestUtility {
             this.clientId = clientId;
             this.clientSecret = clientSecret;
             this.refreshToken = refreshToken;
-            NestUtility.googleAccessToken = accessToken;
+            this.googleAccessToken = accessToken;
         }
     }
 
@@ -96,10 +100,14 @@ public class NestUtility {
     private String clientSecret;
     private String projectId;
     private String refreshToken;
+    private String authorizationToken;
     private String accessToken;
     private String accessTokenExpiration;
+    private String serviceAccountPath;
+    private String subscriptionId;
+    private String pubsubProjectId;
     private long accessTokenExpiresIn;
-    private static AccessToken googleAccessToken;
+    private AccessToken googleAccessToken;
 
     // helper local vars. Will set global properties file
 
@@ -119,7 +127,9 @@ public class NestUtility {
     public AccessToken setAccessToken(String accessToken, int accessTokenExpiresIn) {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.SECOND, accessTokenExpiresIn);
+        logger.debug("setAccessToken setting.... {}", calendar.getTime());
         googleAccessToken = new AccessToken(accessToken, calendar.getTime());
+        logger.debug("googleAccessToken setting.... {}", googleAccessToken.getExpirationTime());
         return (googleAccessToken);
     }
 
@@ -147,17 +157,6 @@ public class NestUtility {
             HttpResponse response = request.execute();
             return (convertStreamtoString(response.getContent()));
         } catch (IOException e) {
-            // int statusCode = Integer.parseInt(e.getMessage().substring(0, 3));
-            /*
-             * if (statusCode == 401) {
-             * // get access token refreshed
-             * logger.debug("deviceExecuteCommand reporting access token is expired..");
-             * refreshAccessToken(refreshToken, clientId, clientSecret);
-             * logger.debug("deviceExecuteCommand reporting access token refresh successful..");
-             * return (deviceExecuteCommand(deviceId, projectId, getAccessToken().getTokenValue(), requestBody)); //
-             * returns
-             */
-            // error
             throw new IOException(e.getMessage());
         }
 
@@ -174,20 +173,6 @@ public class NestUtility {
 
             return (convertStreamtoString(response.getContent()));
         } catch (IOException e) {
-            /*
-             * int statusCode = Integer.parseInt(e.getMessage().substring(0, 3));
-             *
-             * if (statusCode == 401) {
-             * // get access token refreshed
-             * logger.debug("deviceGetInfo reporting access token is expired..");
-             * accessToken = refreshAccessToken(refreshToken, clientId, clientSecret);
-             * logger.debug("deviceGetInfo reporting access token refresh successful..");
-             *
-             * return (getDeviceInfo(accessToken, url)); // returns error code in string
-             * // format. Did this to
-             * // commoditize the
-             * // return value for successful JSON response
-             */
             throw new IOException(e.getMessage()); // never should get here unless there is a problem
         }
     }
@@ -206,6 +191,7 @@ public class NestUtility {
             if (thing != null) {
                 thing.setProperty("accessTokenExpiresIn", response.getExpiresInSeconds().toString());
                 thing.setProperty("accessToken", googleAccessToken.getTokenValue());
+                thing.setProperty("accessTokenExpiration", googleAccessToken.getExpirationTime().toString());
             }
             return (googleAccessToken);
         } catch (TokenResponseException e) {
@@ -270,7 +256,7 @@ public class NestUtility {
 
     }
 
-    public String getDevices(String projectId, AccessToken accessToken) throws IOException {
+    public String getDevices() throws IOException {
 
         try {
             HttpTransport transport = new NetHttpTransport();
@@ -284,44 +270,21 @@ public class NestUtility {
             return (convertStreamtoString(response.getContent()));
 
         } catch (IOException e) {
-            logger.debug("getDevices returning exception {}", e.getMessage());
-            return ((e.getMessage().substring(0, 3)));
+            throw new IOException(e.getMessage());
         }
 
     }
 
-    /*
-     * public int getStructures(String projectId, String accessToken) throws IOException {
-     *
-     * try {
-     * HttpTransport transport = new NetHttpTransport();
-     * HttpRequest request = transport.createRequestFactory().buildGetRequest(new GenericUrl(
-     * "https://smartdevicemanagement.googleapis.com/v1/enterprises/" + projectId + "/structures"));
-     *
-     * request.getHeaders().set(HttpHeaders.CONTENT_TYPE, "application/json");
-     * request.getHeaders().set(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
-     * HttpResponse response = request.execute();
-     *
-     * JSONObject jo = new JSONObject(convertStreamtoString(response.getContent()));
-     * JSONArray ja = jo.getJSONArray("structures");
-     * // allocate structures array
-     * structureId = new String[ja.length()];
-     * structureName = new String[ja.length()];
-     *
-     * for (int i = 0; i < ja.length(); i++) {
-     * structureName[i] = ja.getJSONObject(i).getJSONObject("traits")
-     * .getJSONObject("sdm.structures.traits.Info").getString("customName");
-     * String temp = ja.getJSONObject(i).getString("name");
-     * structureId[i] = temp.substring(temp.lastIndexOf("/") + 1, temp.length());
-     * logger.debug("getStructures reporting id {} and name {}", structureId[i], structureName[i]);
-     * }
-     *
-     * response.getContent().close();
-     * return (response.getStatusCode());
-     * } catch (IOException e) {
-     * logger.debug("getStructures returning exception {}", e.getMessage());
-     * return (Integer.parseInt((e.getMessage().substring(0, 3))));
-     * }
-     * }
-     */
+    public String getServiceAccountPath() {
+        return (serviceAccountPath);
+    }
+
+    public String getPubSubProjectId() {
+        return (pubsubProjectId);
+    }
+
+    public String getSubscriptionId() {
+        return (subscriptionId);
+    }
+
 }

@@ -15,7 +15,11 @@ package org.openhab.binding.nestdeviceaccess.internal.thermostat;
 
 import static org.openhab.binding.nestdeviceaccess.internal.nestdeviceaccessBindingConstants.*;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Date;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -30,10 +34,25 @@ import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
 import org.eclipse.smarthome.core.types.State;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.openhab.binding.nestdeviceaccess.internal.nestdeviceaccessConfiguration;
 import org.openhab.binding.nestdeviceaccess.internal.nesthelper.NestUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.api.gax.core.CredentialsProvider;
+import com.google.api.gax.core.ExecutorProvider;
+import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.api.gax.core.InstantiatingExecutorProvider;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.pubsub.v1.AckReplyConsumer;
+import com.google.cloud.pubsub.v1.MessageReceiver;
+import com.google.cloud.pubsub.v1.Subscriber;
+import com.google.common.collect.Lists;
+import com.google.pubsub.v1.ProjectSubscriptionName;
+import com.google.pubsub.v1.PubsubMessage;
 
 /**
  * The {@link NestThermostatHandler} is responsible for handling commands, which are
@@ -48,6 +67,7 @@ public class NestThermostatHandler extends BaseThingHandler {
     private final Logger logger = LoggerFactory.getLogger(NestThermostatHandler.class);
 
     private @NonNullByDefault({}) ScheduledFuture<?> refreshJob;
+    private @Nullable Future<?> future;
     private @Nullable nestdeviceaccessConfiguration config;
     NestThermostat nestThermostat;
 
@@ -61,20 +81,21 @@ public class NestThermostatHandler extends BaseThingHandler {
         if (refreshJob != null) {
             refreshJob.cancel(true);
         }
+        if (future != null) {
+            future.cancel(true);
+        }
     }
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
-        logger.debug("handleCommand reporting {},{}", channelUID.getId(), command.toString());
+        // logger.debug("handleCommand reporting {},{}", channelUID.getId(), command.toString());
 
         try {
 
             if (thermostatName.equals(channelUID.getId())) {
 
                 if (command instanceof RefreshType) {
-                    // TODO: handle data refresh
-
-                    logger.debug("handleCommand reporting {}", command.toString());
+                    // logger.debug("handleCommand reporting {}", command.toString());
                 }
 
                 // TODO: handle command
@@ -114,6 +135,7 @@ public class NestThermostatHandler extends BaseThingHandler {
                 }
             } else if (thermostatMinimumTemperature.equals(channelUID.getId())) {
                 if (command.toString() != "REFRESH") {
+                    logger.debug("thermostatMinTemp {}", nestThermostat.getMinMaxTemperature()[1]);
                     if (nestThermostat.setThermostatTargetTemperature(0, Double.parseDouble(command.toString()),
                             nestThermostat.getMinMaxTemperature()[1], true)) {
                         logger.info("Thermostat: {} set command {} to {}", thing.getProperties().get("deviceName"),
@@ -144,7 +166,6 @@ public class NestThermostatHandler extends BaseThingHandler {
 
         try {
             // refresh status of the device
-
             if (nestThermostat.getThermostatInfo()) {
                 State statusState = new StringType(nestThermostat.getDeviceStatus());
                 updateState("thermostatStatus", statusState);
@@ -179,7 +200,6 @@ public class NestThermostatHandler extends BaseThingHandler {
 
     @Override
     public void initialize() {
-        logger.debug("Start initializing!");
         config = getConfigAs(nestdeviceaccessConfiguration.class);
         config.projectId = thing.getProperties().get("projectId");
         config.clientId = thing.getProperties().get("clientId");
@@ -188,19 +208,12 @@ public class NestThermostatHandler extends BaseThingHandler {
         config.refreshToken = thing.getProperties().get("refreshToken");
         config.deviceId = thing.getProperties().get("deviceId");
         config.deviceName = thing.getProperties().get("deviceName");
-        config.refreshInterval = Integer.parseInt(thing.getConfiguration().get("refreshInterval").toString());
-
-        // TODO: Initialize the handler.
-        // The framework requires you to return from this method quickly. Also, before leaving this method a thing
-        // status from one of ONLINE, OFFLINE or UNKNOWN must be set. This might already be the real thing status in
-        // case you can decide it directly.
-        // In case you can not decide the thing status directly (e.g. for long running connection handshake using WAN
-        // access or similar) you should set status UNKNOWN here and then decide the real status asynchronously in the
-        // background.
-
-        // set the thing status to UNKNOWN temporarily and let the background task decide for the real status.
-        // the framework is then able to reuse the resources from the thing handler initialization.
-        // we set this upfront to reliably check status updates in unit tests.
+        if (thing.getConfiguration().containsKey("refreshInterval")) {
+            config.refreshInterval = Integer.parseInt(thing.getProperties().get("refreshInterval").toString());
+        } else {
+            config.refreshInterval = 300; // default setting
+        }
+        logger.debug("Start initializing device {}", config.deviceName);
 
         updateStatus(ThingStatus.UNKNOWN);
 
@@ -209,8 +222,15 @@ public class NestThermostatHandler extends BaseThingHandler {
             boolean thingReachable = true; // <background task with long running initialization here>
             try {
 
+                if ((nestUtility.getPubSubProjectId() != null) && (nestUtility.getSubscriptionId() != null)) {
+                    logger.debug("starting pubsub thermostat [{}]...", config.deviceName);
+
+                    future = scheduler.submit(() -> {
+                        pubSubEventHandler(nestUtility.getPubSubProjectId(), nestUtility.getSubscriptionId());
+                    });
+                }
                 nestThermostat.initializeThermostat();
-                // NestUtility.pubSubEventHandler("openhab-nest-int-1601138253554", "sdm_pull_events");
+
                 // when done do:
                 thingReachable = nestThermostat.getDeviceStatus().equalsIgnoreCase("ONLINE");
                 if (thingReachable) {
@@ -218,7 +238,6 @@ public class NestThermostatHandler extends BaseThingHandler {
                 } else {
                     updateStatus(ThingStatus.OFFLINE);
                 }
-
             } catch (Exception e) {
                 logger.debug("Initialize() caught an exception {}", e.getMessage());
             }
@@ -233,5 +252,276 @@ public class NestThermostatHandler extends BaseThingHandler {
         // Add a description to give user information to understand why thing does not work as expected. E.g.
         // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
         // "Can not access device as username and/or password are invalid");
+        logger.debug("Finished initializing device {}", config.deviceName);
     }
+
+    public boolean dispatchMessage(PubsubMessage message) throws IOException {
+
+        String messageEventId;
+        String userId;
+        String resourceName;
+        String eventTrait;
+        String eventSessionId;
+        String eventId;
+        Date messageTime;
+
+        try {
+            // Let's find out what type of message we are dealing with by parsing important artifacts
+
+            JSONObject jo = new JSONObject(message.getData().toStringUtf8());
+
+            messageEventId = jo.getString("eventId").toString();
+            userId = jo.getString("userId");
+            resourceName = jo.getJSONObject("resourceUpdate").getString("name");
+            logger.debug("dispatchMessage processing\ndeviceId [{}]\nname [{}]\nmessageId [{}]",
+                    thing.getProperties().get("deviceId"),
+                    resourceName.substring(resourceName.lastIndexOf("/") + 1, resourceName.length()),
+                    message.getMessageId());
+            if (resourceName.contains(thing.getProperties().get("deviceId"))) {
+                if (jo.getJSONObject("resourceUpdate").has("traits")) {
+
+                    if (jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                            .has("sdm.devices.traits.Temperature")) {
+                        if (jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                .getJSONObject("sdm.devices.traits.Temperature").has("ambientTemperatureCelsius")) {
+
+                            State ambientState = new DecimalType(
+                                    nestThermostat.setAmbientTemperatureSetting(jo.getJSONObject("resourceUpdate")
+                                            .getJSONObject("traits").getJSONObject("sdm.devices.traits.Temperature")
+                                            .getFloat("ambientTemperatureCelsius")));
+                            updateState(thermostatAmbientTemperature, ambientState);
+                        }
+                    }
+
+                    if (jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                            .has("sdm.devices.traits.ThermostatTemperatureSetpoint")) {
+
+                        if ((jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                .getJSONObject("sdm.devices.traits.ThermostatTemperatureSetpoint").has("heatCelsius"))
+                                && (jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                        .getJSONObject("sdm.devices.traits.ThermostatTemperatureSetpoint")
+                                        .has("coolCelsius"))
+                                && (jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                        .has("sdm.devices.traits.ThermostatMode"))) {
+                            // heatCelsius and coolCelsius only exist in two modes,ThermostatEco and HeatCool.
+                            // Check for heatCool since Eco mode is under another trait
+                            if (jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                    .getJSONObject("sdm.devices.traits.ThermostatMode").getString("mode")
+                                    .equalsIgnoreCase("heatcool")) {
+                                // found heatCool. Let's extract data and store
+                                double[] thermostatMinMax = new double[2];
+
+                                thermostatMinMax[0] = jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                        .getJSONObject("sdm.devices.traits.ThermostatTemperatureSetpoint")
+                                        .getFloat("heatCelsius");
+                                thermostatMinMax[1] = jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                        .getJSONObject("sdm.devices.traits.ThermostatTemperatureSetpoint")
+                                        .getFloat("coolCelsius");
+
+                                nestThermostat.setMinMaxTemperatureValue(thermostatMinMax);
+                                State setMinTempState = new DecimalType(nestThermostat.getMinMaxTemperature()[0]);
+                                updateState(thermostatMinimumTemperature, setMinTempState);
+
+                                State setMaxTempState = new DecimalType(nestThermostat.getMinMaxTemperature()[1]);
+                                updateState(thermostatMaximumTemperature, setMaxTempState);
+                            }
+                        } else {
+                            if ((jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                    .getJSONObject("sdm.devices.traits.ThermostatTemperatureSetpoint")
+                                    .has("heatCelsius"))
+                                    && (jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                            .getJSONObject("sdm.devices.traits.ThermostatTemperatureSetpoint")
+                                            .has("coolCelsius"))
+                                    && ((jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                            .has("sdm.devices.traits.ThermostatMode")) == false)) {
+
+                                logger.debug(
+                                        "dispatchMessage found a thermostat value without a mode.. We'll set the minmaxvalue");
+                                // found heatCool. Let's extract data and store
+                                double[] thermostatMinMax = new double[2];
+
+                                thermostatMinMax[0] = jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                        .getJSONObject("sdm.devices.traits.ThermostatTemperatureSetpoint")
+                                        .getFloat("heatCelsius");
+                                thermostatMinMax[1] = jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                        .getJSONObject("sdm.devices.traits.ThermostatTemperatureSetpoint")
+                                        .getFloat("coolCelsius");
+
+                                nestThermostat.setMinMaxTemperatureValue(thermostatMinMax);
+
+                                State setMinTempState = new DecimalType(nestThermostat.getMinMaxTemperature()[0]);
+                                updateState(thermostatMinimumTemperature, setMinTempState);
+
+                                State setMaxTempState = new DecimalType(nestThermostat.getMinMaxTemperature()[1]);
+                                updateState(thermostatMaximumTemperature, setMaxTempState);
+                            }
+                        }
+                    }
+
+                    if (jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                            .has("sdm.devices.traits.ThermostatMode")) {
+                        if (jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                .getJSONObject("sdm.devices.traits.ThermostatMode").has("mode")) {
+
+                            State modeState = new StringType(nestThermostat
+                                    .setThermostatModeValue(jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                            .getJSONObject("sdm.devices.traits.ThermostatMode").getString("mode")));
+                            updateState(thermostatCurrentMode, modeState);
+                        }
+
+                        if (jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                .getJSONObject("sdm.devices.traits.ThermostatMode").has("availableModes")) {
+                            JSONArray jaAvailableModes = jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                    .getJSONObject("sdm.devices.traits.ThermostatMode").getJSONArray("availableModes");
+                            String[] deviceAvailableThermostatModes = new String[jaAvailableModes.length()];
+                            for (int nCount = 0; nCount < jaAvailableModes.length(); nCount++) {
+                                // get Available Modes
+                                deviceAvailableThermostatModes[nCount] = jaAvailableModes.getString(nCount);
+                            }
+                            nestThermostat.setAvailableThermostatModes(deviceAvailableThermostatModes);
+                        }
+                    }
+
+                    if (jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                            .has("sdm.devices.traits.ThermostatEcoMode")) {
+                        if (jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                .getJSONObject("sdm.devices.traits.ThermostatEcoMode").has("mode")) {
+
+                            State ecoModeState = new StringType(nestThermostat.setThermostatEcoModeValue(
+                                    jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                            .getJSONObject("sdm.devices.traits.ThermostatEcoMode").getString("mode")));
+                            updateState(thermostatCurrentEcoMode, ecoModeState);
+                        }
+
+                        if (jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                .getJSONObject("sdm.devices.traits.ThermostatEcoMode").has("availableModes")) {
+                            JSONArray jaAvailableModes = jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                    .getJSONObject("sdm.devices.traits.ThermostatEcoMode")
+                                    .getJSONArray("availableModes");
+                            String[] deviceAvailableThermostatEcoModes = new String[jaAvailableModes.length()];
+                            for (int nCount = 0; nCount < jaAvailableModes.length(); nCount++) {
+                                // get Available Modes
+                                deviceAvailableThermostatEcoModes[nCount] = jaAvailableModes.getString(nCount);
+                            }
+                            nestThermostat.setAvailableThermostatEcoModes(deviceAvailableThermostatEcoModes);
+                        }
+                        if ((jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                .getJSONObject("sdm.devices.traits.ThermostatEcoMode").has("heatCelsius"))
+                                && (jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                        .getJSONObject("sdm.devices.traits.ThermostatEcoMode").has("coolCelsius"))
+                                && (jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                        .getJSONObject("sdm.devices.traits.ThermostatEcoMode").has("mode"))) {
+
+                            // If Mode is active, we set to this value for our aggregated minmaxvalue
+                            if ((jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                    .getJSONObject("sdm.devices.traits.ThermostatEcoMode").has("coolCelsius"))
+                                    && (jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                            .getJSONObject("sdm.devices.traits.ThermostatEcoMode").getString("mode"))
+                                                    .equalsIgnoreCase("manual_eco")) {
+                                double[] thermostatMinMax = new double[2];
+
+                                thermostatMinMax[0] = jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                        .getJSONObject("sdm.devices.traits.ThermostatEcoMode").getFloat("heatCelsius");
+                                thermostatMinMax[1] = jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                        .getJSONObject("sdm.devices.traits.ThermostatEcoMode").getFloat("coolCelsius");
+                                logger.debug("We should not be here for ECO mode settings..");
+                                nestThermostat.setMinMaxTemperatureValue(thermostatMinMax);
+                                State setMinTempState = new DecimalType(thermostatMinMax[0]);
+                                updateState(thermostatMinimumTemperature, setMinTempState);
+
+                                State setMaxTempState = new DecimalType(thermostatMinMax[1]);
+                                updateState(thermostatMaximumTemperature, setMaxTempState);
+                            }
+                        }
+                    }
+
+                    if (jo.getJSONObject("resourceUpdate").getJSONObject("traits").has("sdm.devices.traits.Fan")) {
+                        if (jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                .getJSONObject("sdm.devices.traits.Fan").has("timerMode")) {
+                            State fanState = new StringType(nestThermostat
+                                    .setDeviceFan(jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                            .getJSONObject("sdm.devices.traits.Fan").getString("timerMode")));
+                            updateState(thermostatFanMode, fanState);
+                        }
+                    }
+                    if (jo.getJSONObject("resourceUpdate").getJSONObject("traits").has("sdm.devices.traits.Humidity")) {
+                        // get Humidity properties and set them
+                        if (jo.getJSONObject("resourceUpdate").getJSONObject("traits")
+                                .getJSONObject("sdm.devices.traits.Humidity").has("ambientHumidityPercent")) {
+                            State humidityState = new DecimalType(nestThermostat.setHumidityPercent(jo
+                                    .getJSONObject("resourceUpdate").getJSONObject("traits")
+                                    .getJSONObject("sdm.devices.traits.Humidity").getInt("ambientHumidityPercent")));
+                            updateState(thermostatAmbientHumidityPercent, humidityState);
+                        }
+                    }
+                }
+                logger.debug("dispatchMessage processed messageId {} successfully", message.getMessageId());
+                return (true);
+            } else {
+                return (false);
+            }
+
+        } catch (JSONException e) {
+            logger.debug("dispatchMessage exception {}", e.getMessage());
+            return (false);
+        } catch (Exception e) {
+            logger.debug("dispatchMessage general exception exception {}", e.getMessage());
+            return (false);
+        }
+
+    }
+
+    public void pubSubEventHandler(String projectId, String subscriptionId) {
+        ProjectSubscriptionName subscriptionName = ProjectSubscriptionName.of(projectId, subscriptionId);
+
+        Subscriber subscriber = null;
+        // Instantiate an asynchronous message receiver.
+        // ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(5);
+        MessageReceiver receiver = new MessageReceiver() {
+            @Override
+            public void receiveMessage(@Nullable PubsubMessage message, final @Nullable AckReplyConsumer consumer) {
+                logger.debug("got message: MessageId {}", message.getMessageId());
+                try {
+                    if (dispatchMessage(message)) {
+                        consumer.ack();
+                    } else {
+                        logger.debug("messageReceiver NACK message {}", message.getData().toStringUtf8());
+                        consumer.nack();
+                    }
+                } catch (IOException e) {
+                    logger.debug("receiveMessage threw Exception {}", e.getMessage());
+                    consumer.nack();
+                }
+
+            }
+        };
+
+        try {
+
+            GoogleCredentials credentials = GoogleCredentials
+                    .fromStream(new FileInputStream(nestUtility.getServiceAccountPath()))
+                    // GoogleCredentials credentials = GoogleCredentials.create(googleAccessToken)
+                    .createScoped(Lists.newArrayList("https://www.googleapis.com/auth/pubsub"));
+
+            CredentialsProvider cred = FixedCredentialsProvider.create(credentials);
+
+            ExecutorProvider executorProvider = InstantiatingExecutorProvider.newBuilder().setExecutorThreadCount(1)
+                    .build();
+            subscriber = Subscriber.newBuilder(subscriptionName, receiver).setCredentialsProvider(cred)
+                    .setExecutorProvider(executorProvider).build();
+            // Start the subscriber.
+            subscriber.startAsync().awaitRunning();
+            // Allow the subscriber to run indefinitely unless an unrecoverable error occurs.
+            subscriber.awaitTerminated();
+            subscriber.stopAsync().awaitTerminated(); // end the async thread
+        } catch (IllegalStateException e) {
+            logger.debug("illegal state exception {}", e.getMessage());
+
+        } catch (FileNotFoundException e) {
+            logger.debug("FileNotFound exception {}", e.getMessage());
+        } catch (IOException e) {
+            logger.debug("IOException exception {}", e.getMessage());
+        }
+    }
+
 }

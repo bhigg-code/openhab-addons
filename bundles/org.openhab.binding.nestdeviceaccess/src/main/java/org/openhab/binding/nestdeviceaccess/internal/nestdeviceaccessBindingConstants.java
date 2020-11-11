@@ -38,5 +38,22 @@ public class nestdeviceaccessBindingConstants {
     public static final String thermostatMinimumTemperature = "thermostatMinimumTemperature";
     public static final String thermostatMaximumTemperature = "thermostatMaximumTemperature";
     public static final String thermostatScaleSetting = "thermostatScaleSetting";
+    public static final String thermostatAmbientTemperature = "thermostatAmbientTemperature";
+    public static final String thermostatAmbientHumidityPercent = "thermostatAmbientHumidityPercent";
+    public static final String thermostatFanMode = "thermostatFanMode";
     public static final String doorbellName = "doorbellName";
+    public static final String doorbellEventImage = "doorbellEventImage";
+    public static final String doorbellChimeLastEventTime = "doorbellChimeLastEventTime";
+    public static final String doorbellChimeEvent = "doorbellChimeEvent";
+    public static final String doorbellPersonEvent = "doorbellPersonEvent";
+    public static final String doorbellPersonLastEventTime = "doorbellPersonLastEventTime";
+    public static final String doorbellMotionEvent = "doorbellMotionEvent";
+    public static final String doorbellMotionLastEventTime = "doorbellMotionLastEventTime";
+    public static final String doorbellSoundEvent = "doorbellSoundEvent";
+    public static final String doorbellSoundLastEventTime = "doorbellSoundLastEventTime";
+    public static final String doorbellLiveStreamUrl = "doorbellLiveStreamUrl";
+    public static final String doorbellLiveStreamExpirationTime = "doorbellLiveStreamExpirationTime";
+    public static final String doorbellLiveStreamExtensionToken = "doorbellLiveStreamExtensionToken";
+    public static final String doorbellLiveStreamCurrentToken = "doorbellLiveStreamCurrentToken";
+
 }

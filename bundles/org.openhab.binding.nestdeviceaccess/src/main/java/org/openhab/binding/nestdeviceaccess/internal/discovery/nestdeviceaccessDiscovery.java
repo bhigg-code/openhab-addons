@@ -62,26 +62,40 @@ public class nestdeviceaccessDiscovery extends AbstractDiscoveryService {
     private String authorizationToken;
     private AccessToken googleAccessToken;
     private long accessTokenExpiresIn;
+    private String serviceAccountPath;
+    private String subscriptionId;
+    private String pubsubProjectId;
     private boolean initialize;
 
     @Activate
     protected void activate(ComponentContext context) {
         Dictionary<String, Object> properties = context.getProperties();
-        projectId = properties.get("projectId").toString();
-        clientSecret = properties.get("clientSecret").toString();
-        clientId = properties.get("clientId").toString();
-        refreshToken = properties.get("refreshToken").toString();
-        authorizationToken = properties.get("authorizationToken").toString();
 
-        if (((projectId == null) || (clientId == null) || (clientSecret == null) || (refreshToken == null))
-                && (authorizationToken == null)) {
+        if (properties.isEmpty()) {
             logger.debug(
-                    "activate in the Discovery service does NOT enough data to initiliaze.. projectId {}\nclientId {}\nclientSecret{}\nrefreshToken {}\nauthorizationToken {}",
-                    projectId, clientId, clientSecret, refreshToken, authorizationToken);
+                    "activate has zero configuration properies.. Please import a nestdeviceaccess.cfg per the documentation into the services folder with the appropriate parameters..");
             initialize = false;
         } else {
-            initialize = true;
+            projectId = properties.get("projectId").toString();
+            clientSecret = properties.get("clientSecret").toString();
+            clientId = properties.get("clientId").toString();
+            refreshToken = properties.get("refreshToken").toString();
+            authorizationToken = properties.get("authorizationToken").toString();
+            serviceAccountPath = properties.get("serviceAccountPath").toString();
+            subscriptionId = properties.get("subscriptionId").toString();
+            pubsubProjectId = properties.get("pubsubProjectId").toString();
+
+            if (((projectId == null) || (clientId == null) || (clientSecret == null) || (refreshToken == null))
+                    && (authorizationToken == null)) {
+                logger.debug(
+                        "activate in the Discovery service does NOT enough data to initiliaze.. projectId {}\nclientId {}\nclientSecret{}\nrefreshToken {}\nauthorizationToken {}",
+                        projectId, clientId, clientSecret, refreshToken, authorizationToken);
+                initialize = false;
+            } else {
+                initialize = true;
+            }
         }
+
     }
 
     private void addThing(String devicesType[], String devicesId[], String devicesName[], String devicesStatus[]) {
@@ -95,15 +109,24 @@ public class nestdeviceaccessDiscovery extends AbstractDiscoveryService {
                     if (devicesStatus[i].equalsIgnoreCase("online")) {
                         typeId = THING_TYPE_THERMOSTAT;
                         ThingUID deviceThing = new ThingUID(typeId, devicesId[i]);
-                        Map<String, Object> properties = new HashMap<>(9);
+                        Map<String, Object> properties = new HashMap<>(12);
                         properties.put("deviceId", devicesId[i]);
                         properties.put("deviceName", devicesName[i]);
                         properties.put("refreshToken", refreshToken);
                         properties.put("clientId", clientId);
                         properties.put("clientSecret", clientSecret);
                         properties.put("accessToken", googleAccessToken.getTokenValue());
-                        properties.put("accessTokenExpiration", googleAccessToken.getExpirationTime());
+                        properties.put("accessTokenExpiration", googleAccessToken.getExpirationTime().toString());
                         properties.put("projectId", projectId);
+                        if (serviceAccountPath.length() > 0) {
+                            properties.put("serviceAccountPath", serviceAccountPath);
+                        }
+                        if (subscriptionId.length() > 0) {
+                            properties.put("subscriptionId", subscriptionId);
+                        }
+                        if (pubsubProjectId.length() > 0) {
+                            properties.put("pubsubProjectId", pubsubProjectId);
+                        }
                         DiscoveryResult result = DiscoveryResultBuilder.create(deviceThing).withProperties(properties)
                                 .withLabel("Nest " + devicesName[i] + " Thermostat").build();
                         thingDiscovered(result);
@@ -113,15 +136,25 @@ public class nestdeviceaccessDiscovery extends AbstractDiscoveryService {
                 case "sdm.devices.types.DOORBELL":
                     typeId = THING_TYPE_DOORBELL;
                     ThingUID deviceThing = new ThingUID(typeId, devicesId[i]);
-                    Map<String, Object> properties = new HashMap<>(9);
+                    Map<String, Object> properties = new HashMap<>(12);
                     properties.put("deviceId", devicesId[i]);
                     properties.put("deviceName", devicesName[i]);
                     properties.put("refreshToken", refreshToken);
                     properties.put("clientId", clientId);
                     properties.put("clientSecret", clientSecret);
                     properties.put("accessToken", googleAccessToken.getTokenValue());
-                    properties.put("accessTokenExpiration", googleAccessToken.getExpirationTime());
+                    properties.put("accessTokenExpiration", googleAccessToken.getExpirationTime().toString());
                     properties.put("projectId", projectId);
+                    if (serviceAccountPath.length() > 0) {
+                        properties.put("serviceAccountPath", serviceAccountPath);
+                    }
+                    if (subscriptionId.length() > 0) {
+                        properties.put("subscriptionId", subscriptionId);
+                    }
+                    if (pubsubProjectId.length() > 0) {
+                        properties.put("pubsubProjectId", pubsubProjectId);
+                    }
+
                     DiscoveryResult result = DiscoveryResultBuilder.create(deviceThing).withProperties(properties)
                             .withLabel("Nest " + devicesName[i] + " Doorbell").build();
                     thingDiscovered(result);
@@ -158,6 +191,7 @@ public class nestdeviceaccessDiscovery extends AbstractDiscoveryService {
             } else {
                 // accessToken is typically stale.. Getting fresh on initialization
                 googleAccessToken = nestUtility.refreshAccessToken(refreshToken, clientId, clientSecret);
+                logger.debug("discovery service expire access {}", googleAccessToken.getExpirationTime());
             }
             String url = "https://smartdevicemanagement.googleapis.com/v1/enterprises/" + projectId + "/devices";
             // get devices for discovery

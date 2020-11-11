@@ -31,5 +31,8 @@ public class nestdeviceaccessConfiguration {
     public String accessTokenExpiresIn;
     public String deviceId;
     public String deviceName;
+    public String serviceAccountPath;
+    public String subscriptionId;
+    public String pubsubProjectId;
     public int refreshInterval;
 }

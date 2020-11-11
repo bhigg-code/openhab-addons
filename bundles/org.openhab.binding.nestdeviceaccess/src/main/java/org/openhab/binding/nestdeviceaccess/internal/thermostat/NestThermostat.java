@@ -35,8 +35,8 @@ public class NestThermostat {
         }
     }
 
-    Thing thing;
-    NestUtility nestUtility;
+    public Thing thing;
+    public NestUtility nestUtility;
 
     private final Logger logger = LoggerFactory.getLogger(NestThermostat.class);
 
@@ -47,6 +47,7 @@ public class NestThermostat {
     public int deviceHumidityPercent;
     public String deviceStatus;
     public String deviceFan;
+    public String deviceId;
     public String deviceCurrentThermostatMode;
     public String[] deviceAvailableThermostatModes;
     public String deviceThermostatEcoMode;
@@ -238,7 +239,8 @@ public class NestThermostat {
             throws IOException {
 
         String jsonContent = "";
-
+        logger.debug("setThermostatTargetTemperature value {} minValue {} maxValue {} typeRange {}", value, minValue,
+                maxValue, typeRange);
         try {
 
             if (!typeRange) {
@@ -278,24 +280,24 @@ public class NestThermostat {
         }
     }
 
-    public boolean getDevices() throws IOException {
+    public String getDevices() throws IOException {
         try {
-            String url = "https://smartdevicemanagement.googleapis.com/v1/enterprises/"
-                    + thing.getProperties().get("projectId") + "/devices";
-            nestUtility.getDeviceInfo(url);
-            return (true);
+            return (nestUtility.getDevices());
         } catch (IOException e) {
             throw new IOException(e.getMessage());
         }
     }
 
     public boolean initializeThermostat() throws IOException {
-
-        return (getDevices());
-
+        return (getThermostatInfo());
     }
 
     public int getCurrentHumidity() {
+        return (deviceHumidityPercent);
+    }
+
+    public int setHumidityPercent(int value) {
+        deviceHumidityPercent = value;
         return (deviceHumidityPercent);
     }
 
@@ -315,7 +317,17 @@ public class NestThermostat {
         return (deviceFan);
     }
 
+    public String setDeviceFan(String value) {
+        deviceFan = value;
+        return (deviceFan);
+    }
+
     public String getThermostatMode() {
+        return (deviceCurrentThermostatMode);
+    }
+
+    public String setThermostatModeValue(String value) {
+        deviceCurrentThermostatMode = value;
         return (deviceCurrentThermostatMode);
     }
 
@@ -323,11 +335,26 @@ public class NestThermostat {
         return (deviceAvailableThermostatModes);
     }
 
+    public String[] setAvailableThermostatModes(String[] value) {
+        deviceAvailableThermostatModes = value.clone();
+        return (deviceAvailableThermostatModes);
+    }
+
+    public String setThermostatEcoModeValue(String value) {
+        deviceThermostatEcoMode = value;
+        return (deviceThermostatEcoMode);
+    }
+
     public String getThermostatEcoMode() {
         return (deviceThermostatEcoMode);
     }
 
     public String[] getAvailableThermostatEcoModes() {
+        return (deviceAvailableThermostatEcoModes);
+    }
+
+    public String[] setAvailableThermostatEcoModes(String[] value) {
+        deviceAvailableThermostatEcoModes = value.clone();
         return (deviceAvailableThermostatEcoModes);
     }
 
@@ -363,6 +390,16 @@ public class NestThermostat {
         }
     }
 
+    public double setAmbientTemperatureSetting(double value) {
+        if (getTemperatureScaleSetting().equalsIgnoreCase("Fahrenheit")) {
+            deviceAmbientTemperatureSetting = convertToFahrenheit(value);
+            return (deviceAmbientTemperatureSetting);
+        } else {
+            deviceAmbientTemperatureSetting = value;
+            return (deviceAmbientTemperatureSetting);
+        }
+    }
+
     public double getCurrentTemperatureHeat() {
         if (getTemperatureScaleSetting().equalsIgnoreCase("Fahrenheit")) {
             return (convertToFahrenheit(deviceCurrentThermostatHeatCelsius));
@@ -391,7 +428,6 @@ public class NestThermostat {
     public double[] getMinMaxTemperature() {
         double[] minMaxValue = new double[2];
         if (getTemperatureScaleSetting().equalsIgnoreCase("Fahrenheit")) {
-
             minMaxValue[0] = convertToFahrenheit(deviceMinTemperature);
             minMaxValue[1] = convertToFahrenheit(deviceMaxTemperature);
             return (minMaxValue);
@@ -400,6 +436,19 @@ public class NestThermostat {
             minMaxValue[1] = deviceMaxTemperature;
             return (minMaxValue);
         }
+    }
+
+    public double[] setMinMaxTemperatureValue(double[] value) {
+
+        double[] minMaxValue = new double[2];
+
+        deviceMinTemperature = value[0];
+        deviceMaxTemperature = value[1];
+        minMaxValue[0] = deviceMinTemperature;
+        minMaxValue[1] = deviceMaxTemperature;
+
+        return (minMaxValue.clone());
+
     }
 
     private double convertToFahrenheit(double temperature) {
@@ -415,7 +464,6 @@ public class NestThermostat {
             String jsonContent;
             jsonContent = nestUtility.getDeviceInfo("https://smartdevicemanagement.googleapis.com/v1/enterprises/"
                     + thing.getProperties().get("projectId") + "/devices/" + thing.getProperties().get("deviceId"));
-
             return (parseThermostatInfo(jsonContent));
 
         } catch (IOException e) {
