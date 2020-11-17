@@ -55,8 +55,9 @@ import org.slf4j.LoggerFactory;
 public class nestdeviceaccessHandlerFactory extends BaseThingHandlerFactory {
     private final Logger logger = LoggerFactory.getLogger(nestdeviceaccessHandlerFactory.class);
 
-    private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections.unmodifiableSet(
-            Stream.of(THING_TYPE_GENERIC, THING_TYPE_THERMOSTAT, THING_TYPE_DOORBELL).collect(Collectors.toSet()));
+    private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections.unmodifiableSet(Stream
+            .of(THING_TYPE_GENERIC, THING_TYPE_THERMOSTAT, THING_TYPE_DOORBELL, THING_TYPE_CAMERA, THING_TYPE_DISPLAY)
+            .collect(Collectors.toSet()));
 
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {
@@ -79,6 +80,14 @@ public class nestdeviceaccessHandlerFactory extends BaseThingHandlerFactory {
         }
         if (thingTypeUID.equals(THING_TYPE_DOORBELL)) {
             logger.debug("createHandler reporting Doorbell..");
+            return new NestDoorbellHandler(thing);
+        }
+        if (thingTypeUID.equals(THING_TYPE_CAMERA)) {
+            logger.debug("createHandler reporting Camera..");
+            return new NestDoorbellHandler(thing);
+        }
+        if (thingTypeUID.equals(THING_TYPE_DISPLAY)) {
+            logger.debug("createHandler reporting Display..");
             return new NestDoorbellHandler(thing);
         }
         logger.info("createHandler never should have come here.. Returning null");

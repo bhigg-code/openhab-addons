@@ -63,6 +63,7 @@ import com.google.pubsub.v1.PubsubMessage;
 @NonNullByDefault
 public class NestThermostatHandler extends BaseThingHandler {
 
+    // nestUtility class
     NestUtility nestUtility = new NestUtility(thing);
     private final Logger logger = LoggerFactory.getLogger(NestThermostatHandler.class);
 
@@ -209,7 +210,7 @@ public class NestThermostatHandler extends BaseThingHandler {
         config.deviceId = thing.getProperties().get("deviceId");
         config.deviceName = thing.getProperties().get("deviceName");
         if (thing.getConfiguration().containsKey("refreshInterval")) {
-            config.refreshInterval = Integer.parseInt(thing.getProperties().get("refreshInterval").toString());
+            config.refreshInterval = Integer.parseInt(thing.getConfiguration().get("refreshInterval").toString());
         } else {
             config.refreshInterval = 300; // default setting
         }
@@ -277,11 +278,15 @@ public class NestThermostatHandler extends BaseThingHandler {
                     thing.getProperties().get("deviceId"),
                     resourceName.substring(resourceName.lastIndexOf("/") + 1, resourceName.length()),
                     message.getMessageId());
+
             if (resourceName.contains(thing.getProperties().get("deviceId"))) {
+                logger.debug("dispatchMessage found device match for message [{}]",
+                        thing.getProperties().get("deviceName"));
                 if (jo.getJSONObject("resourceUpdate").has("traits")) {
 
                     if (jo.getJSONObject("resourceUpdate").getJSONObject("traits")
                             .has("sdm.devices.traits.Temperature")) {
+
                         if (jo.getJSONObject("resourceUpdate").getJSONObject("traits")
                                 .getJSONObject("sdm.devices.traits.Temperature").has("ambientTemperatureCelsius")) {
 
@@ -289,6 +294,7 @@ public class NestThermostatHandler extends BaseThingHandler {
                                     nestThermostat.setAmbientTemperatureSetting(jo.getJSONObject("resourceUpdate")
                                             .getJSONObject("traits").getJSONObject("sdm.devices.traits.Temperature")
                                             .getFloat("ambientTemperatureCelsius")));
+
                             updateState(thermostatAmbientTemperature, ambientState);
                         }
                     }
@@ -455,7 +461,8 @@ public class NestThermostatHandler extends BaseThingHandler {
                         }
                     }
                 }
-                logger.debug("dispatchMessage processed messageId {} successfully", message.getMessageId());
+                logger.debug("dispatchMessage processed messageId [{}] successfully for device [{}]",
+                        message.getMessageId(), thing.getProperties().get("deviceName"));
                 return (true);
             } else {
                 return (false);
@@ -485,8 +492,8 @@ public class NestThermostatHandler extends BaseThingHandler {
                     if (dispatchMessage(message)) {
                         consumer.ack();
                     } else {
-                        logger.debug("messageReceiver NACK message {}", message.getData().toStringUtf8());
                         consumer.nack();
+                        logger.debug("messageReceiver NACK message {}", message.getData().toStringUtf8());
                     }
                 } catch (IOException e) {
                     logger.debug("receiveMessage threw Exception {}", e.getMessage());
@@ -505,7 +512,7 @@ public class NestThermostatHandler extends BaseThingHandler {
 
             CredentialsProvider cred = FixedCredentialsProvider.create(credentials);
 
-            ExecutorProvider executorProvider = InstantiatingExecutorProvider.newBuilder().setExecutorThreadCount(1)
+            ExecutorProvider executorProvider = InstantiatingExecutorProvider.newBuilder().setExecutorThreadCount(5)
                     .build();
             subscriber = Subscriber.newBuilder(subscriptionName, receiver).setCredentialsProvider(cred)
                     .setExecutorProvider(executorProvider).build();

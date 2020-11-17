@@ -61,7 +61,8 @@ public class NestUtility {
             subscriptionId = this.thing.getProperties().get("subscriptionId");
             pubsubProjectId = this.thing.getProperties().get("pubsubProjectId");
 
-            SimpleDateFormat format = new SimpleDateFormat("E MMM dd HH:mm:ss zzz yyyy");
+            SimpleDateFormat format = new SimpleDateFormat("E MMM dd HH:mm:ss z yyyy");
+
             try {
                 if (accessTokenExpiration != null) {
                     Date date = format.parse(accessTokenExpiration);
@@ -71,7 +72,19 @@ public class NestUtility {
                     thing.setProperty("accessTokenExpiration", googleAccessToken.getExpirationTime().toString());
                 }
             } catch (ParseException e) {
-                logger.debug("NestUtility constructor failed to parse date {}", e.getMessage());
+                logger.debug(
+                        "NestUtility constructor failed to parse date {}.. Let's get the access token without date",
+                        e.getMessage());
+                // Added logic with help of Fraltav to test/troubleshoot. Issue dealt with failure in parsing date.
+                // Fix: Added logic to refreshAccessToken in the parsing exception
+                try {
+                    googleAccessToken = refreshAccessToken(refreshToken, clientId, clientSecret);
+                    thing.setProperty("accessTokenExpiration", googleAccessToken.getExpirationTime().toString());
+                } catch (IOException ex) {
+                    logger.debug(
+                            "NestUtility constructor reporting failure to get the accessToken. Further failures will be expected as the accessToken is incomplete..");
+                }
+
             } catch (IOException e) {
                 logger.debug("NestUtility constructor failed with exception {}", e.getMessage());
             }
@@ -212,9 +225,6 @@ public class NestUtility {
                     new GenericUrl("https://www.googleapis.com/oauth2/v4/token"), authorizationToken)
                             .setRedirectUri("https://www.google.com")
                             .setClientAuthentication(new BasicAuthentication(clientId, clientSecret)).execute();
-            // logger.info("Access Token: {}", response.getAccessToken());
-            // logger.info("Refresh Token: {}", response.getRefreshToken());
-            // logger.info("Refresh Token Lifespan: {}", response.getExpiresInSeconds());
             accessToken = response.getAccessToken();
             refreshToken = response.getRefreshToken();
 

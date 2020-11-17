@@ -24,7 +24,6 @@ import java.util.Date;
 import java.util.TimeZone;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -66,6 +65,7 @@ import com.google.pubsub.v1.PubsubMessage;
 @NonNullByDefault
 public class NestDoorbellHandler extends BaseThingHandler {
 
+    // NestUtility Class
     NestUtility nestUtility = new NestUtility(thing);
     private final Logger logger = LoggerFactory.getLogger(NestDoorbellHandler.class);
 
@@ -210,11 +210,12 @@ public class NestDoorbellHandler extends BaseThingHandler {
         config.refreshToken = thing.getProperties().get("refreshToken");
         config.deviceId = thing.getProperties().get("deviceId");
         config.deviceName = thing.getProperties().get("deviceName");
+        config.customName = thing.getProperties().get("customName");
         config.serviceAccountPath = thing.getProperties().get("serviceAccountPath");
         config.subscriptionId = thing.getProperties().get("subscriptionId");
         config.pubsubProjectId = thing.getProperties().get("pubsubProjectId");
         if (thing.getConfiguration().containsKey("refreshInterval")) {
-            config.refreshInterval = Integer.parseInt(thing.getProperties().get("refreshInterval").toString());
+            config.refreshInterval = Integer.parseInt(thing.getConfiguration().get("refreshInterval").toString());
         } else {
             config.refreshInterval = 300; // default setting
         }
@@ -251,16 +252,17 @@ public class NestDoorbellHandler extends BaseThingHandler {
             }
         });
 
-        if (refreshJob == null || refreshJob.isCancelled()) {
-            refreshJob = scheduler.scheduleWithFixedDelay(this::refreshChannels, 0, config.refreshInterval,
-                    TimeUnit.SECONDS);
-        }
+        // if (refreshJob == null || refreshJob.isCancelled()) {
+        // refreshJob = scheduler.scheduleWithFixedDelay(this::refreshChannels, 0, config.refreshInterval,
+        // TimeUnit.SECONDS);
+        // }
         // Note: When initialization can NOT be done set the status with more details for further
         // analysis. See also class ThingStatusDetail for all available status details.
         // Add a description to give user information to understand why thing does not work as expected. E.g.
         // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
         // "Can not access device as username and/or password are invalid");
         logger.debug("Finished initializing device {}", config.deviceName);
+
     }
 
     private boolean updateLiveStreamChannels() throws IOException {
@@ -291,6 +293,7 @@ public class NestDoorbellHandler extends BaseThingHandler {
         String eventSessionId;
         String eventId;
         Date messageTime;
+        DateFormat utcFormat;
 
         try {
             // Let's find out what type of message we are dealing with by parsing important artifacts
@@ -304,7 +307,14 @@ public class NestDoorbellHandler extends BaseThingHandler {
                     thing.getProperties().get("deviceId"),
                     resourceName.substring(resourceName.lastIndexOf("/") + 1, resourceName.length()),
                     message.getMessageId());
-            DateFormat utcFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+
+            // put in place to resolve a condition where sometimes milliseconds is returned and sometimes just seconds
+            if (jo.getString("timestamp").contains(".")) {
+                utcFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+            } else {
+                utcFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+            }
+
             utcFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
             messageTime = utcFormat.parse(jo.getString("timestamp"));
 
@@ -329,7 +339,8 @@ public class NestDoorbellHandler extends BaseThingHandler {
                             if (nestDoorbell.isImageValid(messageTime)) {
                                 soundImage = nestDoorbell.getCameraImage(eventId);
                                 updateState(doorbellSoundEventImage, soundImage);
-                                logger.debug("dispatchMessage processed a Sound camera image with data {}", soundImage);
+                                logger.debug("dispatchMessage processed a Sound camera image with data {} and date {}",
+                                        soundImage, messageTime);
                                 updateLiveStreamChannels();
                             }
 
@@ -348,8 +359,8 @@ public class NestDoorbellHandler extends BaseThingHandler {
                             if (nestDoorbell.isImageValid(messageTime)) {
                                 personImage = nestDoorbell.getCameraImage(eventId);
                                 updateState(doorbellPersonEventImage, personImage);
-                                logger.debug("dispatchMessage processed a Person camera image with data {}",
-                                        personImage);
+                                logger.debug("dispatchMessage processed a Person camera image with data {} and date {}",
+                                        personImage, messageTime);
                                 updateLiveStreamChannels();
                             }
 
@@ -368,8 +379,8 @@ public class NestDoorbellHandler extends BaseThingHandler {
                             if (nestDoorbell.isImageValid(messageTime)) {
                                 motionImage = nestDoorbell.getCameraImage(eventId);
                                 updateState(doorbellMotionEventImage, motionImage);
-                                logger.debug("dispatchMessage processed a Motion camera image with data {}",
-                                        motionImage);
+                                logger.debug("dispatchMessage processed a Motion camera image with data {} and date {}",
+                                        motionImage, messageTime);
                                 updateLiveStreamChannels();
                             }
                         } else {
@@ -427,6 +438,7 @@ public class NestDoorbellHandler extends BaseThingHandler {
             public void receiveMessage(@Nullable PubsubMessage message, final @Nullable AckReplyConsumer consumer) {
                 logger.debug("got message: MessageId {}", message.getMessageId());
                 try {
+
                     if (dispatchMessage(message)) {
                         consumer.ack();
                     } else {
@@ -458,7 +470,7 @@ public class NestDoorbellHandler extends BaseThingHandler {
 
             CredentialsProvider cred = FixedCredentialsProvider.create(credentials);
 
-            ExecutorProvider executorProvider = InstantiatingExecutorProvider.newBuilder().setExecutorThreadCount(1)
+            ExecutorProvider executorProvider = InstantiatingExecutorProvider.newBuilder().setExecutorThreadCount(5)
                     .build();
             subscriber = Subscriber.newBuilder(subscriptionName, receiver).setCredentialsProvider(cred)
                     .setExecutorProvider(executorProvider).build();
