@@ -172,6 +172,8 @@ public class NestThermostatHandler extends BaseThingHandler {
                 updateState("thermostatStatus", statusState);
                 State nameState = new StringType(nestThermostat.getDeviceName());
                 updateState("thermostatName", nameState);
+                State nameHVACState = new StringType(nestThermostat.getThermostatHVACStatus());
+                updateState(thermostatHVACStatus, nameHVACState);
                 State humidityState = new DecimalType(nestThermostat.getCurrentHumidity());
                 updateState("thermostatHumidityPercent", humidityState);
                 State ambientState = new DecimalType(nestThermostat.getAmbientTemperatureSetting());
@@ -209,11 +211,13 @@ public class NestThermostatHandler extends BaseThingHandler {
         config.refreshToken = thing.getProperties().get("refreshToken");
         config.deviceId = thing.getProperties().get("deviceId");
         config.deviceName = thing.getProperties().get("deviceName");
+        logger.debug("Showing debug message for refreshInterval bug. i.e. Before the issue..");
         if (thing.getConfiguration().containsKey("refreshInterval")) {
             config.refreshInterval = Integer.parseInt(thing.getConfiguration().get("refreshInterval").toString());
         } else {
             config.refreshInterval = 300; // default setting
         }
+        logger.debug("Showing debug message for refreshInterval bug. i.e. After the issue..");
         logger.debug("Start initializing device {}", config.deviceName);
 
         updateStatus(ThingStatus.UNKNOWN);

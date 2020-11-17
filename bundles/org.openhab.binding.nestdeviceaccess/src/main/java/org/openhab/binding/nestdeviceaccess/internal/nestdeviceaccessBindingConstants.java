@@ -43,6 +43,7 @@ public class nestdeviceaccessBindingConstants {
     public static final String thermostatAmbientTemperature = "thermostatAmbientTemperature";
     public static final String thermostatAmbientHumidityPercent = "thermostatAmbientHumidityPercent";
     public static final String thermostatFanMode = "thermostatFanMode";
+    public static final String thermostatHVACStatus = "thermostatHVACStatus";
     public static final String doorbellName = "doorbellName";
     public static final String doorbellSoundEventImage = "doorbellSoundEventImage";
     public static final String doorbellMotionEventImage = "doorbellMotionEventImage";

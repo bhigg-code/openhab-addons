@@ -1,18 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <thing:thing-descriptions bindingId="nestdeviceaccess"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
-	xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
-	
-	<thing-type id="nest-device-access">
-		<label>Nest Device Access</label>
-		<description>A binding to interact with Nest Device Access</description>		
-		<config-description>
-			<parameter name="projectId" type="text" required="false">
-				<label>Project ID</label>
-				<description>This is the GCP Project that you created and integrated with the SDM API</description>
-			</parameter>
-			<parameter name="clientId" type="text" required="false">
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
+xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
+
+
+<thing-type id="nest-device-access">
+
+<label>Nest Device Access</label>
+<description>A binding to interact with Nest Device Access</description>
+<config-description>
+<parameter name="projectId" type="text" required="false">
+<label>Project ID</label>
+<description>This is the GCP Project that you created and integrated with the SDM API</description>
+</parameter>
+<parameter name="clientId" type="text" required="false">
 <label>Client ID</label>
 <description>This is the oAuth 2.0 Client ID associated with the provided Project ID</description>
 </parameter>
@@ -24,158 +26,164 @@
 <label>Authorization Token</label>
 <description>This is the one time authorization token used to retrieve the Refresh and Access token to the SDM API</description>
 </parameter>                        
-		</config-description>
+</config-description>
 </thing-type>
-	<thing-type id="nest-device-doorbell">
-	<label>Nest Device DoorBell</label>
-	<description>A binding to interact with Nest Device DoorBells</description>
-	<channels>
-	<channel id="doorbellName" typeId="doorbellName-channel" />
-	<channel id="doorbellSoundEventImage" typeId="doorbellSoundEventImage-channel" />
-	<channel id="doorbellMotionEventImage" typeId="doorbellMotionEventImage-channel" />
-	<channel id="doorbellChimeEventImage" typeId="doorbellChimeEventImage-channel" />
-	<channel id="doorbellPersonEventImage" typeId="doorbellPersonEventImage-channel" />
-	<channel id="doorbellChimeLastEventTime" typeId="doorbellChimeLastEventTime-channel" />
-	<channel id="doorbellChimeEvent" typeId="doorbellChimeEvent-channel" />
-	<channel id="doorbellPersonEvent" typeId="doorbellPersonEvent-channel" />
-	<channel id="doorbellPersonLastEventTime" typeId="doorbellPersonLastEventTime-channel"/>
-	<channel id="doorbellMotionEvent" typeId="doorbellMotionEvent-channel" />
-	<channel id="doorbellMotionLastEventTime" typeId="doorbellMotionLastEventTime-channel" />
-	<channel id="doorbellSoundEvent" typeId="doorbellSoundEvent-channel" />
-	<channel id="doorbellSoundLastEventTime" typeId="doorbellSoundLastEventTime-channel" />
-	<channel id="doorbellLiveStreamUrl" typeId="doorbellLiveStreamUrl-channel" />
-	<channel id="doorbellLiveStreamExpirationTime" typeId="doorbellLiveStreamExpirationTime-channel" />
-	<channel id="doorbellLiveStreamExtensionToken" typeId="doorbellLiveStreamExtensionToken-channel" />
-	<channel id="doorbellLiveStreamCurrentToken" typeId="doorbellLiveStreamCurrentToken-channel" />
-	
-	</channels>
-	<config-description>
+<thing-type id="nest-device-doorbell">
+<label>Nest Device DoorBell</label>
+<description>A binding to interact with Nest Device DoorBells</description>
+<channels>
+<channel id="doorbellName" typeId="doorbellName-channel" />
+<channel id="doorbellSoundEventImage" typeId="doorbellSoundEventImage-channel" />
+<channel id="doorbellMotionEventImage" typeId="doorbellMotionEventImage-channel" />
+<channel id="doorbellChimeEventImage" typeId="doorbellChimeEventImage-channel" />
+<channel id="doorbellPersonEventImage" typeId="doorbellPersonEventImage-channel" />
+<channel id="doorbellChimeLastEventTime" typeId="doorbellChimeLastEventTime-channel" />
+<channel id="doorbellChimeEvent" typeId="doorbellChimeEvent-channel" />
+<channel id="doorbellPersonEvent" typeId="doorbellPersonEvent-channel" />
+<channel id="doorbellPersonLastEventTime" typeId="doorbellPersonLastEventTime-channel"/>
+<channel id="doorbellMotionEvent" typeId="doorbellMotionEvent-channel" />
+<channel id="doorbellMotionLastEventTime" typeId="doorbellMotionLastEventTime-channel" />
+<channel id="doorbellSoundEvent" typeId="doorbellSoundEvent-channel" />
+<channel id="doorbellSoundLastEventTime" typeId="doorbellSoundLastEventTime-channel" />
+<channel id="doorbellLiveStreamUrl" typeId="doorbellLiveStreamUrl-channel" />
+<channel id="doorbellLiveStreamExpirationTime" typeId="doorbellLiveStreamExpirationTime-channel" />
+<channel id="doorbellLiveStreamExtensionToken" typeId="doorbellLiveStreamExtensionToken-channel" />
+<channel id="doorbellLiveStreamCurrentToken" typeId="doorbellLiveStreamCurrentToken-channel" />
+
+</channels>
+<config-description>
 <parameter name="refreshInterval" type="text" required="false">
 <label>Refresh Interval</label>
 <description>This is refresh interval in seconds to update the nest device information. default to 300s</description>
 </parameter>
 </config-description>
-	</thing-type>
-	<channel-type id="doorbellName-channel">
-	<item-type>String</item-type>
-	<label>Doorbell Name</label>
-	<description>Doorbell Name</description>
-	</channel-type>
-	<channel-type id="doorbellSoundEventImage-channel">
-	<item-type>Image</item-type>
-	<label>SoundEventImage</label>
-	<description>Doorbell Static Image based on a Sound Event</description>
-	</channel-type>	
-	<channel-type id="doorbellMotionEventImage-channel">
-	<item-type>Image</item-type>
-	<label>MotionEventImage</label>
-	<description>Doorbell Static Image based on a Motion Event</description>
-	</channel-type>
-	<channel-type id="doorbellPersonEventImage-channel">
-	<item-type>Image</item-type>
-	<label>PersonEventImage</label>
-	<description>Doorbell Static Image based on a Person Event</description>
-	</channel-type>
-	<channel-type id="doorbellChimeEventImage-channel">
-	<item-type>Image</item-type>
-	<label>ChimeEventImage</label>
-	<description>Doorbell Static Image based on a Chime Event</description>
-	</channel-type>
-	<channel-type id="doorbellChimeLastEventTime-channel">
-	<item-type>String</item-type>
-	<label>ChimeLastEventTime</label>
-	<description>The last time that the Door Chime was last pressed</description>	
-	</channel-type>
-	<channel-type id="doorbellChimeEvent-channel">
-	<item-type>Switch</item-type>
-	<label>has_Chime</label>
-	<description>Toggles whether a doorbell was pressed recently.. Refreshed at normal refresh interval for the Doorbell</description>
-	</channel-type>
-	<channel-type id="doorbellPersonLastEventTime-channel">
-	<item-type>String</item-type>
-	<label>PersonLastEventTime</label>
-	<description>The last time that a person was detected at the door</description>
-	</channel-type>
-	<channel-type id="doorbellPersonEvent-channel">
-	<item-type>Switch</item-type>
-	<label>has_Person</label>
-	<description>Toggles whether a person was seen at the doorbell recently.. Refreshed at normal refresh interval for the Doorbell</description>
-	</channel-type>
-	<channel-type id="doorbellMotionLastEventTime-channel">
-	<item-type>String</item-type>
-	<label>MotionLastEventTime</label>
-	<description>Toggles whether Motion was seen at the doorbell recently.. Refreshed at normal refresh interval for the Doorbell</description>
-	</channel-type>
-	<channel-type id="doorbellMotionEvent-channel">
-	<item-type>Switch</item-type>
-	<label>has_Motion</label>
-	<description>Toggles whether Motion was seen at the doorbell recently.. Refreshed at normal refresh interval for the Doorbell</description>
-	</channel-type>
-	<channel-type id="doorbellSoundLastEventTime-channel">
-	<item-type>String</item-type>
-	<label>SoundLastEventTime</label>
-	<description>Toggles whether a sound was heard at the doorbell recently.. Refreshed at normal refresh interval for the Doorbell</description>
-	</channel-type>
-	<channel-type id="doorbellSoundEvent-channel">
-	<item-type>Switch</item-type>
-	<label>has_Sound</label>
-	<description>Toggles whether a sound was heard at the doorbell recently.. Refreshed at normal refresh interval for the Doorbell</description>
-	</channel-type>
-	<channel-type id="doorbellLiveStreamUrl-channel">
-	<item-type>String</item-type>
-	<label>LiveStreamUrl</label>
-	<description>Includes an rtsps video stream URL from the most recent event.. Refreshed at the next motion detected</description>
-	</channel-type>
-	<channel-type id="doorbellLiveStreamExpirationTime-channel">
-	<item-type>String</item-type>
-	<label>LiveStreamExpiration</label>
-	<description>Livestream token expiration time</description>
-	</channel-type>
-	<channel-type id="doorbellLiveStreamExtensionToken-channel">
-	<item-type>String</item-type>
-	<label>LiveStreamExtensionToken</label>
-	<description>Livestream token extension value</description>
-	</channel-type>
-	<channel-type id="doorbellLiveStreamCurrentToken-channel">
-	<item-type>String</item-type>
-	<label>LiveStreamCurrentToken</label>
-	<description>Livestream current token value</description>
-	</channel-type>
-	<thing-type id="nest-device-thermostat">
+</thing-type>
+<channel-type id="doorbellName-channel">
+<item-type>String</item-type>
+<label>Doorbell Name</label>
+<description>Doorbell Name</description>
+</channel-type>
+<channel-type id="doorbellSoundEventImage-channel">
+<item-type>Image</item-type>
+<label>SoundEventImage</label>
+<description>Doorbell Static Image based on a Sound Event</description>
+</channel-type> 
+<channel-type id="doorbellMotionEventImage-channel">
+<item-type>Image</item-type>
+<label>MotionEventImage</label>
+<description>Doorbell Static Image based on a Motion Event</description>
+</channel-type>
+<channel-type id="doorbellPersonEventImage-channel">
+<item-type>Image</item-type>
+<label>PersonEventImage</label>
+<description>Doorbell Static Image based on a Person Event</description>
+</channel-type>
+<channel-type id="doorbellChimeEventImage-channel">
+<item-type>Image</item-type>
+<label>ChimeEventImage</label>
+<description>Doorbell Static Image based on a Chime Event</description>
+</channel-type>
+<channel-type id="doorbellChimeLastEventTime-channel">
+<item-type>String</item-type>
+<label>ChimeLastEventTime</label>
+<description>The last time that the Door Chime was last pressed</description>   
+</channel-type>
+<channel-type id="doorbellChimeEvent-channel">
+<item-type>Switch</item-type>
+<label>has_Chime</label>
+<description>Toggles whether a doorbell was pressed recently.. Refreshed at normal refresh interval for the Doorbell</description>
+</channel-type>
+<channel-type id="doorbellPersonLastEventTime-channel">
+<item-type>String</item-type>
+<label>PersonLastEventTime</label>
+<description>The last time that a person was detected at the door</description>
+</channel-type>
+<channel-type id="doorbellPersonEvent-channel">
+<item-type>Switch</item-type>
+<label>has_Person</label>
+<description>Toggles whether a person was seen at the doorbell recently.. Refreshed at normal refresh interval for the Doorbell</description>
+</channel-type>
+<channel-type id="doorbellMotionLastEventTime-channel">
+<item-type>String</item-type>
+<label>MotionLastEventTime</label>
+<description>Toggles whether Motion was seen at the doorbell recently.. Refreshed at normal refresh interval for the Doorbell</description>
+</channel-type>
+<channel-type id="doorbellMotionEvent-channel">
+<item-type>Switch</item-type>
+<label>has_Motion</label>
+<description>Toggles whether Motion was seen at the doorbell recently.. Refreshed at normal refresh interval for the Doorbell</description>
+</channel-type>
+<channel-type id="doorbellSoundLastEventTime-channel">
+<item-type>String</item-type>
+<label>SoundLastEventTime</label>
+<description>Toggles whether a sound was heard at the doorbell recently.. Refreshed at normal refresh interval for the Doorbell</description>
+</channel-type>
+<channel-type id="doorbellSoundEvent-channel">
+<item-type>Switch</item-type>
+<label>has_Sound</label>
+<description>Toggles whether a sound was heard at the doorbell recently.. Refreshed at normal refresh interval for the Doorbell</description>
+</channel-type>
+<channel-type id="doorbellLiveStreamUrl-channel">
+<item-type>String</item-type>
+<label>LiveStreamUrl</label>
+<description>Includes an rtsps video stream URL from the most recent event.. Refreshed at the next motion detected</description>
+</channel-type>
+<channel-type id="doorbellLiveStreamExpirationTime-channel">
+<item-type>String</item-type>
+<label>LiveStreamExpiration</label>
+<description>Livestream token expiration time</description>
+</channel-type>
+<channel-type id="doorbellLiveStreamExtensionToken-channel">
+<item-type>String</item-type>
+<label>LiveStreamExtensionToken</label>
+<description>Livestream token extension value</description>
+</channel-type>
+<channel-type id="doorbellLiveStreamCurrentToken-channel">
+<item-type>String</item-type>
+<label>LiveStreamCurrentToken</label>
+<description>Livestream current token value</description>
+</channel-type>
+<thing-type id="nest-device-thermostat">
 <label>Nest Device Thermostat</label>
-<description>A binding to interact with Nest Device Thermostats</description>       
+<description>A binding to interact with Nest Device Thermostats</description>
 <channels>
-<channel id="thermostatName" typeId="thermostatName-channel" />
-<channel id="thermostatHumidityPercent" typeId="thermostatHumidityPercent-channel" />
-<channel id="thermostatAmbientTemperature" typeId="thermostatAmbientTemperature-channel" />
-<channel id="thermostatFanMode" typeId="thermostatFanMode-channel" />
-<channel id="thermostatTemperatureHeat" typeId="thermostatTemperatureHeat-channel" />
-<channel id="thermostatTemperatureCool" typeId="thermostatTemperatureCool-channel" />
-<channel id="thermostatCurrentMode" typeId="thermostatCurrentMode-channel" />
-<channel id="thermostatCurrentEcoMode" typeId="thermostatCurrentEcoMode-channel" />
-<channel id="thermostatTargetTemperature" typeId="thermostatTargetTemperature-channel" />
-<channel id="thermostatMinimumTemperature" typeId="thermostatMinimumTemperature-channel" />
-<channel id="thermostatMaximumTemperature" typeId="thermostatMaximumTemperature-channel" />
-<channel id="thermostatScaleSetting" typeId="thermostatScaleSetting-channel" />            
+<channel id="thermostatName" typeId="thermostatName-channel"/>
+<channel id="thermostatHumidityPercent" typeId="thermostatHumidityPercent-channel"/>
+<channel id="thermostatAmbientTemperature" typeId="thermostatAmbientTemperature-channel"/>
+<channel id="thermostatFanMode" typeId="thermostatFanMode-channel"/>
+<channel id="thermostatTemperatureHeat" typeId="thermostatTemperatureHeat-channel"/>
+<channel id="thermostatTemperatureCool" typeId="thermostatTemperatureCool-channel"/>
+<channel id="thermostatCurrentMode" typeId="thermostatCurrentMode-channel"/>
+<channel id="thermostatCurrentEcoMode" typeId="thermostatCurrentEcoMode-channel"/>
+<channel id="thermostatTargetTemperature" typeId="thermostatTargetTemperature-channel"/>
+<channel id="thermostatMinimumTemperature" typeId="thermostatMinimumTemperature-channel"/>
+<channel id="thermostatMaximumTemperature" typeId="thermostatMaximumTemperature-channel"/>
+<channel id="thermostatScaleSetting" typeId="thermostatScaleSetting-channel" />
+<channel id="thermonstatHVACStatus" typeId="thermostatHVACStatus-channel" />
 </channels>
 <config-description>
 <parameter name="refreshInterval" type="text" required="false">
 <label>Refresh Interval</label>
 <description>This is refresh interval in seconds to update the nest device information. Default is 300s</description>
 </parameter>
-</config-description>	   
-	</thing-type>	
-	<channel-type id="thermostatName-channel">
-		<item-type>String</item-type>
-		<label>Thermostat Name</label>
-		<description>Thermostat Name</description>
-	</channel-type>
-	<channel-type id="thermostatFanMode-channel">
-	<item-type>String</item-type>
-	<label>Fan Mode</label>
-	<description>Lists the current Fan Mode</description>
-	</channel-type>
-	<channel-type id="thermostatHumidityPercent-channel">
+</config-description>
+</thing-type>   
+<channel-type id="thermostatHVACStatus-channel">
+<item-type>String</item-type>
+<label>Thermostat HVAC Status</label>
+<description>Provides the Thermostat HVAC Status</description>
+</channel-type>
+<channel-type id="thermostatName-channel">
+<item-type>String</item-type>
+<label>Thermostat Name</label>
+<description>Thermostat Name</description>
+</channel-type>
+<channel-type id="thermostatFanMode-channel">
+<item-type>String</item-type>
+<label>Fan Mode</label>
+<description>Lists the current Fan Mode</description>
+</channel-type>
+<channel-type id="thermostatHumidityPercent-channel">
 <item-type>Number:Length</item-type>
 <label>Humidity Percentage</label>
 <description>Lists the current humidity percentage from the thermostat</description>
