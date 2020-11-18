@@ -211,14 +211,12 @@ public class NestThermostatHandler extends BaseThingHandler {
         config.refreshToken = thing.getProperties().get("refreshToken");
         config.deviceId = thing.getProperties().get("deviceId");
         config.deviceName = thing.getProperties().get("deviceName");
-        logger.debug("Showing debug message for refreshInterval bug. i.e. Before the issue..");
+
         if (thing.getConfiguration().containsKey("refreshInterval")) {
             config.refreshInterval = Integer.parseInt(thing.getConfiguration().get("refreshInterval").toString());
         } else {
             config.refreshInterval = 300; // default setting
         }
-        logger.debug("Showing debug message for refreshInterval bug. i.e. After the issue..");
-        logger.debug("Start initializing device {}", config.deviceName);
 
         updateStatus(ThingStatus.UNKNOWN);
 
@@ -226,6 +224,7 @@ public class NestThermostatHandler extends BaseThingHandler {
         scheduler.execute(() -> {
             boolean thingReachable = true; // <background task with long running initialization here>
             try {
+                logger.debug("Start initializing device [{}]", config.deviceName);
 
                 if ((nestUtility.getPubSubProjectId() != null) && (nestUtility.getSubscriptionId() != null)) {
                     logger.debug("starting pubsub thermostat [{}]...", config.deviceName);
@@ -236,13 +235,13 @@ public class NestThermostatHandler extends BaseThingHandler {
                 }
                 nestThermostat.initializeThermostat();
 
-                // when done do:
                 thingReachable = nestThermostat.getDeviceStatus().equalsIgnoreCase("ONLINE");
                 if (thingReachable) {
                     updateStatus(ThingStatus.ONLINE);
                 } else {
                     updateStatus(ThingStatus.OFFLINE);
                 }
+                logger.debug("Finished initializing device [{}]", config.deviceName);
             } catch (Exception e) {
                 logger.debug("Initialize() caught an exception {}", e.getMessage());
             }
@@ -257,7 +256,7 @@ public class NestThermostatHandler extends BaseThingHandler {
         // Add a description to give user information to understand why thing does not work as expected. E.g.
         // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
         // "Can not access device as username and/or password are invalid");
-        logger.debug("Finished initializing device {}", config.deviceName);
+
     }
 
     public boolean dispatchMessage(PubsubMessage message) throws IOException {
