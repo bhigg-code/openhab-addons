@@ -340,6 +340,11 @@ public class NestThermostat {
         return (deviceAvailableThermostatModes);
     }
 
+    public String setHVACStatus(String value) {
+        deviceThermostatHVACStatus = value;
+        return (deviceThermostatHVACStatus);
+    }
+
     public String setThermostatEcoModeValue(String value) {
         deviceThermostatEcoMode = value;
         return (deviceThermostatEcoMode);
