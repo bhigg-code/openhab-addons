@@ -159,7 +159,7 @@ xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https:/
 <channel id="thermostatMinimumTemperature" typeId="thermostatMinimumTemperature-channel"/>
 <channel id="thermostatMaximumTemperature" typeId="thermostatMaximumTemperature-channel"/>
 <channel id="thermostatScaleSetting" typeId="thermostatScaleSetting-channel" />
-<channel id="thermonstatHVACStatus" typeId="thermostatHVACStatus-channel" />
+<channel id="thermostatHVACStatus" typeId="thermostatHVACStatus-channel" />
 </channels>
 <config-description>
 <parameter name="refreshInterval" type="text" required="false">
