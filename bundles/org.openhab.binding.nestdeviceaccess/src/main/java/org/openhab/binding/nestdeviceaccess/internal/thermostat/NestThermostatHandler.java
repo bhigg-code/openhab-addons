@@ -466,10 +466,9 @@ public class NestThermostatHandler extends BaseThingHandler {
 
                     if (jo.getJSONObject("resourceUpdate").getJSONObject("traits")
                             .has("sdm.devices.traits.ThermostatHvac")) {
-                        // get Humidity properties and set them
                         if (jo.getJSONObject("resourceUpdate").getJSONObject("traits")
                                 .getJSONObject("sdm.devices.traits.ThermostatHvac").has("status")) {
-                            State HVACStatusState = new DecimalType(nestThermostat
+                            State HVACStatusState = new StringType(nestThermostat
                                     .setHVACStatus(jo.getJSONObject("resourceUpdate").getJSONObject("traits")
                                             .getJSONObject("sdm.devices.traits.ThermostatHvac").getString("status")));
                             updateState(thermostatHVACStatus, HVACStatusState);
