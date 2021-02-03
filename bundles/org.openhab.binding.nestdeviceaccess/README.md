@@ -73,7 +73,7 @@ refreshInterval is used to tell the thing to refresh status (in seconds) and is 
 | thermostatMinTemperature      | Number:Dimensionless   | This is a setting used for Eco and Heat-Cool HVAC Mode
 | thermostatMaxTemperature      | Number:Dimensionless   | This is a setting used for Eco and Heat-Cool HVAC Mode
 | thermostatScaleSetting        | Text                   | This is the Scale setting for the Thermostat (FAHERNHEIT or CELSIUS)
-
+| thermostatHVACStatus          | Text                   | This is the Current HVAC status of the thermostat (OFF, HEATING, or COOLING)
 
 ## Full Example
 

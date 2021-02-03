@@ -141,7 +141,8 @@ public class NestThermostatHandler extends BaseThingHandler {
                 updateState("thermostatCurrentEcoMode", ecoModeState);
                 State scaleSettingState = new StringType(nestThermostat.getTemperatureScaleSetting());
                 updateState("thermostatScaleSetting", scaleSettingState);
-
+                State hvacstatusState = new StringType(nestThermostat.getThermostatHVACStatus());
+                updateState("thermostatHVACStatus", hvacstatusState);
             }
         } catch (IOException e) {
             logger.debug("refreshChannels() reporting exception {}", e.getMessage());

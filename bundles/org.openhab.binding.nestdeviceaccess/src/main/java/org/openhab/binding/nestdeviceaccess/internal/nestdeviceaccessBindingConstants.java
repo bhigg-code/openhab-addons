@@ -37,4 +37,5 @@ public class nestdeviceaccessBindingConstants {
     public static final String thermostatMinimumTemperature = "thermostatMinimumTemperature";
     public static final String thermostatMaximumTemperature = "thermostatMaximumTemperature";
     public static final String thermostatScaleSetting = "thermostatScaleSetting";
+    public static final String thermostatHVACStatus = "thermostatHVACStatus";
 }

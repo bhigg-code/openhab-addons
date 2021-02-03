@@ -41,7 +41,8 @@
 <channel id="thermostatTargetTemperature" typeId="thermostatTargetTemperature-channel" />
 <channel id="thermostatMinTemperature" typeId="thermostatMinTemperature-channel" />
 <channel id="thermostatMaxTemperature" typeId="thermostatMaxTemperature-channel" />
-<channel id="thermostatScaleSetting" typeId="thermostatScaleSetting-channel" />            
+<channel id="thermostatScaleSetting" typeId="thermostatScaleSetting-channel" />
+<channel id="thermostatHVACStatus" typeId="thermostatHVACStatus-channel" />
 </channels>
 <config-description>
 <parameter name="refreshInterval" type="text" required="true">
