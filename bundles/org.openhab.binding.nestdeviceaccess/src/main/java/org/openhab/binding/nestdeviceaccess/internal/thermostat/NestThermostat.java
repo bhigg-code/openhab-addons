@@ -75,7 +75,13 @@ public class NestThermostat {
         deviceHumidityPercent = jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.Humidity")
                 .getInt("ambientHumidityPercent");
         deviceStatus = jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.Connectivity").getString("status");
-        deviceFan = jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.Fan").getString("timerMode");
+
+        //if the thermostat does not have a fan, the Fan object will be empty "sdm.devices.traits.Fan": {},  - validate the timerMode object exists before pulling its value.
+        //this may apply to other traits as well, but haven't had the ability to test.
+        if (jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.Fan").has("timerMode")){
+            deviceFan = jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.Fan").getString("timerMode");
+        }
+
         deviceCurrentThermostatMode = jo.getJSONObject("traits").getJSONObject("sdm.devices.traits.ThermostatMode")
                 .getString("mode");
 
